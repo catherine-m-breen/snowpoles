@@ -3,7 +3,7 @@ import os
 
 ### THESE PATHS ARE FOR THE DEMO DATA; PLEASE UPDATE WITH OWN PATHS"
 ROOT_PATH = '~/SNEX20_TLI_resized_clean'
-OUTPUT_PATH = '~/snow_poles_outputs_resized_LRe4_BS64_E10000_clean_SNEX_IN_wOK_8020'
+OUTPUT_PATH = '~/model'
 snowfreetbl_path = '~/snowfree_table.csv'
 manual_labels_path = '~/manuallylabeled_CUBM02corr.csv' 
 datetime_info = '~/labeledImgs_datetime_info.csv' 
