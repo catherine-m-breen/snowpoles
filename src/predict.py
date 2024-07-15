@@ -5,11 +5,6 @@ export the csv of the data points and just use the bottom
 example command line to run:
 
 python src/predict.py --image_path '/Volumes/CatBreen/CV4ecology/SNEX20_TLI_resized/CHE10' --output_path '/Volumes/CatBreen/Chewelah_resized'
-
-python src/predict.py --image_path '/Volumes/CatBreen/Chewelah_resized/samples/CHE10' --output_path 'Volumes/CatBreen/Chewelah_resized'
-
-python src/predict.py --image_path '/Users/catherinebreen/Documents/Chapter 1/WRRsubmission/data/448res/SNEX20_TLI_resized_clean/CHE2' --output_path '/Users/catherinebreen/Documents/Chapter 1/WRRsubmission/data/448res_results/CNNkeypoint'
-
 python src/predict.py --model_path '/Users/catherinebreen/Documents/Chapter1/WRRsubmission/manuscript/model' --folder_path '/Users/catherinebreen/code/snow-Dayz/snowpoles/example_data/cam1' --output_path '/Users/catherinebreen/Documents' --dir_path '/Users/catherinebreen/code/snow-Dayz/snowpoles/example_data'
 
 
