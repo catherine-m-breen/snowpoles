@@ -2,10 +2,11 @@ import torch
 import os
 
 ### THESE PATHS ARE FOR THE DEMO DATA; PLEASE UPDATE WITH OWN PATHS"
-ROOT_PATH = '~/SNEX20_TLI_resized_clean'
-OUTPUT_PATH = '~/model'
-snowfreetbl_path = '~/snowfree_table.csv'
-manual_labels_path = '~/manuallylabeled_CUBM02corr.csv' 
+### All in snowpoles_data
+ROOT_PATH = '~/snowpoles_data/demo_data'
+OUTPUT_PATH = '~/snowpoles_data/model'
+snowfreetbl_path = '~/snowpoles_data/demo_data/snowfree_table.csv'
+manual_labels_path = '~/snowPoles_labels_clean_448res' 
 datetime_info = '~/labeledImgs_datetime_info.csv' 
 native_res_path = '~/nativeRes.csv'
 
