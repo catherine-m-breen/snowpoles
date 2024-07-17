@@ -5,9 +5,18 @@ We present a model that faciltates snow depth extraction from snow poles by iden
 
 <img src="https://github.com/CV4EcologySchool/snow-Dayz/blob/main/snowpoles/example_imgs/E6A_WSCT0293.JPG" style="width: 350px;"> <img src="https://github.com/CV4EcologySchool/snow-Dayz/blob/main/snowpoles/example_imgs/eval_E6A_WSCT0293.JPG.png" width="50%">
 
+## Model environment
+
+To set up the model for the demo and all remaining scripts, we want to make sure we have the right Python environment. To do so, download the github folder, navigate to the folder in your command line, then run the following to install the appropriate packages for the model. 
+
+```
+conda env update -f environment.yml
+```
+
 ## Model Demo
 
-We recommend starting with the demo script to ensure proper folder, model download, and conda environment set-up. There is nothing one needs to do except to download the github folder, and then run the following line after navigating to in your command line. The script is set-up to use the example files and to download the model to your local machine. 
+We recommend starting with the demo script to ensure proper folder, model download, and conda environment set-up. For the demo, run the following line after navigating to in your command line. The script is set-up to use the example files and to download the model to your local machine. Note: If you had trouble on the conda install, feel free to try the src/demo.py script, installing the packages listed in the script using your preferred enviroment manager. 
+
 ```
 python src/demo.py 
 ```
