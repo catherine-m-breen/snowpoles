@@ -1,6 +1,9 @@
 '''
-load model and run on data points 
-export the csv of the data points and just use the bottom
+written by Catherine Breen 
+July 1, 2024
+
+load model and run on example images
+export the csv of pixel lengths and snow depths
 
 example command line to run:
 
@@ -12,9 +15,7 @@ import torch
 import numpy as np
 import cv2
 from model import snowPoleResNet50
-import argparse
 import glob
-import utils
 import pandas as pd
 from tqdm import tqdm
 from scipy.spatial import distance
@@ -62,8 +63,11 @@ def predict(model, args): ##
     Cameras, filenames = [], []
     x1s_pred, y1s_pred, x2s_pred, y2s_pred = [], [], [], []
     total_length_pixels = []
+    snow_depths = []
   
     snowpolefiles = glob.glob(f"~/example_data/**/*")
+    ## full length of poles in cm
+    metadata = pd.read_csv(f"~/example_data/pole_metadata.csv")
     
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
@@ -100,7 +104,6 @@ def predict(model, args): ##
             pred_keypoint[2] = pred_keypoint[2] * (w /224)
             pred_keypoint[1] = pred_keypoint[1] * (h / 224)
             pred_keypoint[3] = pred_keypoint[3] * (h /224)
-            ###########
 
             vis_predicted_keypoints(filename, image, pred_keypoint,) 
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
@@ -112,21 +115,21 @@ def predict(model, args): ##
             total_length_pixels.append(total_length_pixel)
 
             ## snow depth conversion ## 
+            full_length_pole_cm = metadata[metadata['Camera'].isin(val_cameras)] 
+            pixel_cm_conversion = metadata[metadata['Camera'].isin(val_cameras)] 
+            snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
+            snow_depths.append(snow_depth)
             
 
     results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, \
-        'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, 'total_length_pixel': total_length_pixels})
+        'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
+                            'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths)}
 
     results.to_csv(f"{args.output_path}/predictions/{Camera}_results.csv")
 
     return results
 
 def main():
-    # Argument parser for command-line arguments:
-    parser = argparse.ArgumentParser(description='Predict top and bottom coordinates.')
-    parser.add_argument('--dir_path', required=False, help='Path to camera image directory', default = '/example_data')
-  
-    args = parser.parse_args()
 
     download_models()
     #args = parser.parse_args()
