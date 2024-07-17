@@ -5,8 +5,15 @@ We present a model that faciltates snow depth extraction from snow poles by iden
 
 <img src="https://github.com/CV4EcologySchool/snow-Dayz/blob/main/snowpoles/example_imgs/E6A_WSCT0293.JPG" style="width: 350px;"> <img src="https://github.com/CV4EcologySchool/snow-Dayz/blob/main/snowpoles/example_imgs/eval_E6A_WSCT0293.JPG.png" width="50%">
 
+## Model Demo
+
+We recommend starting with the demo script to ensure proper folder, model download, and conda environment set-up. There is nothing one needs to do except to download the github folder, and then run the following line after navigating to in your command line. The script is set-up to use the example files and to download the model to your local machine. 
+```
+python src/demo.py 
+```
+
 > [!IMPORTANT]  
-> Because the model was trained on data in Washington and Colorado, the accuracy on your data for the model "off the shelf" may be lower than what we reported in the paper. To obtain better accuracy, we recommend fine-tuning the model (more on that below). If you'd just like to try the model off the shelf, you can skip right to step 3 (Predictions), which will run the model as is on your data without fine-tuning. 
+> Because the model was trained on data in Washington and Colorado, the accuracy on your data for the model "off the shelf" may be lower than what we reported in the paper. To obtain better accuracy, we recommend fine-tuning the model (more on that below). If you'd like the model off the shelf, you can skip right to step 3 (Predictions), which will run the model as is on your data without fine-tuning. 
 
 ## Retraining for more accurate predictions
 
