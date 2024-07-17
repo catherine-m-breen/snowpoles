@@ -7,7 +7,6 @@ example command line to run:
 python src/predict.py --image_path '/Volumes/CatBreen/CV4ecology/SNEX20_TLI_resized/CHE10' --output_path '/Volumes/CatBreen/Chewelah_resized'
 python src/predict.py --model_path '/Users/catherinebreen/Documents/Chapter1/WRRsubmission/manuscript/model' --folder_path '/Users/catherinebreen/code/snow-Dayz/snowpoles/example_data/cam1' --output_path '/Users/catherinebreen/Documents' --dir_path '/Users/catherinebreen/code/snow-Dayz/snowpoles/example_data'
 
-
 '''
 
 import torch
@@ -31,16 +30,12 @@ from scipy.spatial import distance
 def load_model(args):
     model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
     # load the model checkpoint
-    ## katie's settings:
     if args.model_path == 'NULL':
-        checkpoint = torch.load(config.OUTPUT_PATH + '/model_epoch50.pth', map_location=torch.device('mps')) ##config.OUTPUT_PATH
-    else: #### Load the model based on how the user download the code folder to computer 
+        checkpoint = torch.load(config.OUTPUT_PATH + '/model_epoch50.pth', map_location=torch.device('mps')) 
+    else: 
+        #### Load the model based on how the user download the code folder to computer 
         checkpoint = torch.load(args.model_path + '/model_epoch50.pth', map_location=torch.device('cpu')) 
-        # current_directory = os.getcwd()
-        # neighboring_directory = os.path.join(current_directory, '/model_folder')
-        # model_path = os.path.join(neighboring_directory, 'model_epoch50.pth')
-        # checkpoint = torch.load(model_path, map_location=torch.device('mps'))
-        
+
     #checkpoint = torch.load()
     # load model weights state_dict
     model.load_state_dict(checkpoint['model_state_dict'])
