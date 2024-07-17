@@ -13,7 +13,7 @@ To set up the model for the demo and all remaining scripts, we want to make sure
 conda env update -f environment.yml
 ```
 
-## Model Demo
+## Model demo
 
 We recommend starting with the demo script to ensure proper folder, model download, and conda environment set-up. For the demo, run the following line after navigating to in your command line. The script is set-up to use the example files and to download the model to your local machine. Note: If you had trouble on the conda install, feel free to try the src/demo.py script, installing the packages listed in the script using your preferred enviroment manager. 
 
