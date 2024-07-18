@@ -20,6 +20,7 @@ dependencies:
 - scipy
 - torchmetrics=0.11.3
 - torchvision #=0.13.1
+- pretrainedmodels #         0.7.4   
 
 
 
