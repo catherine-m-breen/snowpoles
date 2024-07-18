@@ -1,5 +1,5 @@
 ## overview
-We present a model that faciltates snow depth extraction from snow poles by identifying the top and bottom of the pole and calculating the length of the pole in pixels. The model contains a neural network with ResNet50 architecture (pre-trained with ImageNet) trained on 9721 images of snowpoles installed in front of time-lapse cameras. The images are from 32 different sites in Okanogan County, Washington, USA, and Grand Mesa, Colorado, USA. We welcome testing of the model on your site, but we recommend an additional training step for best results in your area of interest. More info on each script in the codebase is below. 
+We present a model that faciltates snow depth extraction from snow poles by identifying the top and bottom of the pole and calculating the length of the pole in pixels that can be converted to depth. The model contains a neural network with ResNet50 architecture (pre-trained with ImageNet) trained on 9721 images of snowpoles installed in front of time-lapse cameras. The images are from 32 different sites in Okanogan County, Washington, USA, and Grand Mesa, Colorado, USA. We welcome testing of the model on your site, but we recommend an additional training step for best results in your area of interest. More info on each script in the codebase is below. 
 
 ### Example images (image: left; model prediction: right)
 
