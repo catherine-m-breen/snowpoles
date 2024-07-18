@@ -18,6 +18,7 @@ conda env update -f environment.yml
 We recommend starting with the demo script to ensure proper folder, model download, and conda environment set-up. For the demo, run the following line after navigating to in your command line. The script is set-up to use the example files and to download the model to your local machine. Note: If you had trouble on the conda install, feel free to try the src/demo.py script, installing the packages listed in the script using your preferred enviroment manager. 
 
 ```
+conda activate snowkeypoint
 python src/demo.py 
 ```
 This will create a folder called "predictions" in your downloaded repository folder with the predictions from the model and a csv of snowdepth. It will also create a local folder on your machine with the trained model and weights. 
