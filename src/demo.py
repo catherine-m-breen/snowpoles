@@ -24,13 +24,19 @@ import os
 import IPython
 
 def download_models(): 
-  ## check if path exists 
-  root =  os.getcwd()
-  if not os.path.exists(f"{root}/models"):
-        os.makedirs(f"{root}/models", exist_ok=True)
-        url = 'insert zenodo link'
-        ## downloaded 
-  return print('\n models download! \n')
+    root =  os.getcwd()
+    save_path = f"{root}/models"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path, exist_ok=True)
+    url = 'zenodo path'
+    
+    # download if does not exist  
+    if not os.path.exists(f'{save_path}/CO_and_WA_model.pth'):
+        wget_command = f'wget {url} -P {save_path}'
+        os.system(wget_command)
+        return print('\n models download! \n')
+    else:
+        return print('model already saved')
 
 def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15):
     file = file.split('.')[0]
@@ -50,7 +56,7 @@ def load_model(device):
     model = snowPoleResNet50(pretrained=False, requires_grad=False).to(device)
 
     # pull model from cloud storage
-    model_path = 'models/CO_and_WA_model.pth' 
+    model_path = 'models/CO_and_WA_model.pth'  
     
     checkpoint = torch.load(model_path, map_location=torch.device(device)) 
     
@@ -144,6 +150,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
 
