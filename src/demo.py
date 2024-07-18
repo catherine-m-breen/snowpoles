@@ -18,18 +18,22 @@ from model import snowPoleResNet50
 import glob
 import pandas as pd
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 from scipy.spatial import distance
 import os
+import IPython
 
 def download_models(): 
   ## check if path exists 
-  if not os.path.exists(f"~/models"):
-        os.makedirs(f"~/models", exist_ok=True)
+  root =  os.getcwd()
+  if not os.path.exists(f"{root}/models"):
+        os.makedirs(f"{root}/models", exist_ok=True)
         url = 'insert zenodo link'
         ## downloaded 
-  return print('models download')
+  return print('\n models download! \n')
 
 def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15):
+    file = file.split('.')[0]
     output_keypoint = keypoints.reshape(-1, 2)
     plt.imshow(image)
     for p in range(output_keypoint.shape[0]):
@@ -37,16 +41,16 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
-    plt.savefig(f"~/predictions/image_{file}.png")
+    plt.savefig(f"predictions/image_{file}.png")
     plt.close()
 
-def load_model(args):
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
-
+def load_model(device):
     ## this will most likely be cpu for most users, unless using a GPU
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(device)
+
     # pull model from cloud storage
-    model_path = '~/CO_and_WA_model.pth' 
+    model_path = 'models/CO_and_WA_model.pth' 
     
     checkpoint = torch.load(model_path, map_location=torch.device(device)) 
     
@@ -55,19 +59,19 @@ def load_model(args):
     model.eval()
     return model
 
-def predict(model, args): ## 
+def predict(model, device): ## 
  
-    if not os.path.exists(f"~/predictions"):
-        os.makedirs(f"~/predictions", exist_ok=True)
+    if not os.path.exists(f"predictions"):
+        os.makedirs(f"predictions", exist_ok=True)
 
     Cameras, filenames = [], []
     x1s_pred, y1s_pred, x2s_pred, y2s_pred = [], [], [], []
     total_length_pixels = []
     snow_depths = []
   
-    snowpolefiles = glob.glob(f"~/example_data/**/*")
+    snowpolefiles = glob.glob(f"example_data/**/*")
     ## full length of poles in cm
-    metadata = pd.read_csv(f"~/example_data/pole_metadata.csv")
+    metadata = pd.read_csv(f"example_data/pole_metadata.csv")
     
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
@@ -86,7 +90,7 @@ def predict(model, args): ##
             image = np.transpose(image, (2, 0, 1)) ## 
             image = torch.tensor(image, dtype=torch.float)
             image = image.unsqueeze(0)
-            image = image.to(config.DEVICE)
+            image = image.to(device)
 
             #######
             outputs = model(image)
@@ -115,28 +119,28 @@ def predict(model, args): ##
             total_length_pixels.append(total_length_pixel)
 
             ## snow depth conversion ## 
-            full_length_pole_cm = metadata[metadata['Camera'].isin(val_cameras)] 
-            pixel_cm_conversion = metadata[metadata['Camera'].isin(val_cameras)] 
+            full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length'].values[0]
+            pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
             snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
             snow_depths.append(snow_depth)
             
 
     results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, \
         'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
-                            'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths)}
-
-    results.to_csv(f"{args.output_path}/predictions/{Camera}_results.csv")
+                            'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths})
+    
+    results.to_csv(f"predictions/demo_results.csv")
 
     return results
 
 def main():
-
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     download_models()
-    #args = parser.parse_args()
-    model = load_model(args)
+
+    model = load_model(device)
 
     ## returns a set of images of outputs
-    outputs = predict(model, args)  
+    outputs = predict(model, device)  
 
 if __name__ == '__main__':
     main()
