@@ -20,7 +20,7 @@ We recommend starting with the demo script to ensure proper folder, model downlo
 ```
 python src/demo.py 
 ```
-This will create a folder called "predictions" in your downloaded repository folder with the predictions from the model and a csv of snowdepth. It will also create a local folder on your machine with ResNet model with the snow keypoint weights. 
+This will create a folder called "predictions" in your downloaded repository folder with the predictions from the model and a csv of snowdepth. It will also create a local folder on your machine with the trained model and weights. 
 
 > [!IMPORTANT]  
 > Because the model was trained on data in Washington and Colorado, the accuracy on your data for the model "off the shelf" may be lower than what we reported in the paper. To obtain better accuracy, we recommend fine-tuning the model (more on that below). If you'd like the model off the shelf, you can skip right to step 3 (Predictions), which will run the model as is on your data without fine-tuning. 
