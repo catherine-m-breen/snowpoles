@@ -28,7 +28,7 @@ This will create a folder called "predictions" in your downloaded repository fol
 
 ## Retraining for more accurate predictions
 
-Our findings suggested that some labeling of the dataset of interest improved the performance of the model on new datasets. We recommend following the steps below to 1) label a subset of images from each camera from your study for best results. 2) Fine-tune the model using the subset. Then 3) predict on all of your data, and 4) convert to snow depth. We will first describe how to use the model for predictions, then we will explain how to re-train the model for best results. The overall workflow is summarized in the flowchart below. 
+Our findings suggested that some labeling of the dataset of interest improved the performance of the model on new datasets. We recommend following the steps below to 1) label a subset of images from each camera from your study for best results. 2) Fine-tune the model using the subset. Then 3) predict on all of your data, and 4) convert to snow depth. The overall workflow is summarized in the flowchart below. 
 
 <img src="https://github.com/CV4EcologySchool/snow-Dayz/blob/main/snowpoles/example_imgs/flowchart3.png"> 
 
