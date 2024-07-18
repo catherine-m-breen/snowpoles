@@ -4,9 +4,6 @@ export the csv of the data points and just use the bottom
 
 example command line to run:
 
-python src/evaluate.py --exp_dir '/Volumes/CatBreen/CV4ecology/snow_poles_outputs2' --exp_name snow_poles_outputs2 --image_path '/Volumes/CatBreen/CV4ecology/SNEX20_TLI_test'
-
-
 
 '''
 
@@ -71,7 +68,7 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
 
     automated_sds, manual_sds, diff_sds = [], [], []
 
-    #num_batches = int(len(data)/dataloader.batch_size)
+
     with torch.no_grad():
         for i, data in tqdm(enumerate(data)): #, total=num_batches):
             image, keypoints = data['image'].to(config.DEVICE), data['keypoints'].to(config.DEVICE)
@@ -86,7 +83,7 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
             outputs = model(image)
             #IPython.embed()
             outputs = outputs.detach().cpu().numpy()
-            #output_list.append(outputs)
+            
             utils.eval_keypoints_plot(filename, image, outputs, eval, orig_keypoints=keypoints) ## visualize points
             pred_keypoint = np.array(outputs[0], dtype='float32')
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
@@ -98,12 +95,8 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
 
             ## outputs proj and in cm
             outputs_cm = utils.outputs_in_cm(Camera, filename, x1_pred, y1_pred, x2_pred, y2_pred)
+            
             automated_sd = outputs_cm['snow_depth']
-
-
-            ## predict values < 0 as 0 
-            #if automated_sd < 0: automated_sd = 0
-
             automated_sds.append(automated_sd)
 
             # ## difference between automated and manual
