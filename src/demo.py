@@ -24,11 +24,14 @@ import os
 import IPython
 
 def download_models(): 
+    '''
+    see the Zenodo page for the latest models: https://zenodo.org/records/12764696
+    '''
     root =  os.getcwd()
     save_path = f"{root}/models"
     if not os.path.exists(save_path):
         os.makedirs(save_path, exist_ok=True)
-    url = 'zenodo path'
+    url = 'https://zenodo.org/records/12764696/files/CO_and_WA_model.pth'
     
     # download if does not exist  
     if not os.path.exists(f'{save_path}/CO_and_WA_model.pth'):
@@ -150,4 +153,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
 
