@@ -7,7 +7,7 @@ such as if you have improved metadata, you can run this script by itself on the 
 
 example command line to run:
 
-python src/depth_conversion.py
+python src/depth_conversion.py --predictions_path '/predictions/results.csv' --metadata 'example_nontrained_data/pole_metadata.csv'
 
 '''
 
