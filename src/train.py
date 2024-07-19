@@ -9,6 +9,8 @@ Breen, C. M., Currier, W. R., Vuyovich, C., Miao, Z., & Prugh, L. R. (2024).
 Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning Model. 
 Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
 
+example run (after updating config)
+python src/train.py
 
 '''
 
@@ -55,6 +57,7 @@ if not os.path.exists(f"{config.OUTPUT_PATH}"):
 
 # model 
 model = snowPoleResNet50(pretrained=True, requires_grad=True).to(config.DEVICE)
+download_models()
 
 if config.FINETUNE == True:
     model_path = 'models/CO_and_WA_model.pth'  
