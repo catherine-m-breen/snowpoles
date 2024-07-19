@@ -151,12 +151,6 @@ for epoch in range(config.EPOCHS):
                 best_loss_val = val_epoch_loss
                 best_loss_val_epoch = epoch
     elif epoch > best_loss_val_epoch + 10:
-            torch.save({
-            'epoch': config.EPOCHS,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'loss': criterion,
-            }, f"{config.OUTPUT_PATH}/model_epoch{epoch}.pth")
             break
 
 # loss plots
