@@ -1,5 +1,5 @@
 '''
-written by Catherine M. Breen 
+written by Catherine M. Breen  
 cbreen@uw.edu 
 
 Use of our keypoint detection model currently requires ~10 images per camera. We provide a labeling script below that when pointed 
