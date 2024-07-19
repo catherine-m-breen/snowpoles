@@ -1,11 +1,24 @@
-import time
+'''
+written by: Catherine Breen
+July 1, 2024
+
+Training script for users to fine tune model from Breen et. al 2024
+Please cite: 
+
+Breen, C. M., Currier, W. R., Vuyovich, C., Miao, Z., & Prugh, L. R. (2024). 
+Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning Model. 
+Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
+
+
+'''
+
+# import time
 import torch
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import matplotlib
 import config
-#import config_cpu as config
 import utils
 from model import snowPoleResNet50
 from dataset import train_data, train_loader, valid_data, valid_loader
@@ -15,35 +28,50 @@ import os
 import numpy as np 
 
 matplotlib.style.use('ggplot')
-start_time = time.time() 
+# start_time = time.time() 
+
+def download_models(): 
+    '''
+    see the Zenodo page for the latest models
+    '''
+    root =  os.getcwd()
+    save_path = f"{root}/models"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path, exist_ok=True)
+    url = 'https://zenodo.org/records/12764696/files/CO_and_WA_model.pth'
+    
+    # download if does not exist  
+    if not os.path.exists(f'{save_path}/CO_and_WA_model.pth'):
+        wget_command = f'wget {url} -P {save_path}'
+        os.system(wget_command)
+        return print('\n models download! \n')
+    else:
+        return print('model already saved')
+
 
 ## create output path
 if not os.path.exists(f"{config.OUTPUT_PATH}"):
     os.makedirs(f"{config.OUTPUT_PATH}", exist_ok=True)
 
-if config.DEVICE != 'cpu' and not torch.cuda.is_available():
-        print(f'WARNING: device set to "{config.DEVICE}" but CUDA not available; falling back to CPU...')
-else: print(f'THIS EXPERIMENT USES GPUS: {config.DEVICE}')
-
 # model 
 model = snowPoleResNet50(pretrained=True, requires_grad=True).to(config.DEVICE)
-## model ## load previous model 
+
 if config.FINETUNE == True:
-    checkpoint = torch.load(config.FT_PATH + '/model.pth', map_location=torch.device('cpu'))
-        # load model weights state_dict
+    model_path = 'models/CO_and_WA_model.pth'  
+    checkpoint = torch.load(model_path, map_location=torch.device(config.DEVICE)) 
     model.load_state_dict(checkpoint['model_state_dict'])
     print('fine-tuned model loaded...')
+    
+else: print('this run is not using the pre-trained model!')
 
 # optimizer
 optimizer = optim.Adam(model.parameters(), lr=config.LR)
-# we need a loss function which is good for regression like SmmothL1Loss ...
-# ... or MSELoss
 criterion = nn.SmoothL1Loss()
 
 # training function
 def fit(model, dataloader, data):
     print('Training')
-    model.to(config.DEVICE) ### added on Aug 24
+    model.to(config.DEVICE) ##
     model.train()
     train_running_loss = 0.0
     counter = 0
@@ -98,7 +126,7 @@ val_loss = []
 ## early stopping ##
 #######################
 best_loss_val = np.inf
-best_loss_val_epoch = 0 # index of the epoch
+best_loss_val_epoch = 0 
 #######################
 for epoch in range(config.EPOCHS):
 
@@ -109,8 +137,7 @@ for epoch in range(config.EPOCHS):
     val_loss.append(val_epoch_loss)
     print(f"Train Loss: {train_epoch_loss:.4f}")
     print(f'Val Loss: {val_epoch_loss:.4f}')
-    ####### saving model each epoch
-    #IPython.embed()
+    ####### saving model every 50 epochs
     if (epoch % 50) == 0:
         torch.save({
             'epoch': config.EPOCHS,
@@ -120,11 +147,16 @@ for epoch in range(config.EPOCHS):
             }, f"{config.OUTPUT_PATH}/model_epoch{epoch}.pth")
 
     ####### early stopping #########
-    #IPython.embed()
     if val_epoch_loss < best_loss_val:
                 best_loss_val = val_epoch_loss
                 best_loss_val_epoch = epoch
     elif epoch > best_loss_val_epoch + 10:
+            torch.save({
+            'epoch': config.EPOCHS,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': criterion,
+            }, f"{config.OUTPUT_PATH}/model_epoch{epoch}.pth")
             break
 
 # loss plots
@@ -143,4 +175,4 @@ torch.save({
             'loss': criterion,
             }, f"{config.OUTPUT_PATH}/model.pth") ### the last model
 print('DONE TRAINING')
-print("My program took", time.time() - start_time, "to run")
+# print("My program took", time.time() - start_time, "to run")
