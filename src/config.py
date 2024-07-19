@@ -22,5 +22,6 @@ AUG = True
 keypointColumns = ['x1', 'y1', 'x2', 'y2'] ## update
 
 # Fine-tuning set-up
+## make sure to download model from Zenodo
 FINETUNE = True 
 FT_PATH = './models/CO_and_WA_model.pth' 
