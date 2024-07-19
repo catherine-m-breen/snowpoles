@@ -25,7 +25,7 @@ import IPython
 
 def download_models(): 
     '''
-    see the Zenodo page for the latest models: https://zenodo.org/records/12764696
+    see the Zenodo page for the latest models
     '''
     root =  os.getcwd()
     save_path = f"{root}/models"
@@ -50,7 +50,7 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
-    plt.savefig(f"predictions/image_{file}.png")
+    plt.savefig(f"demo_predictions/image_{file}.png")
     plt.close()
 
 def load_model(device):
@@ -70,8 +70,8 @@ def load_model(device):
 
 def predict(model, device): ## 
  
-    if not os.path.exists(f"predictions"):
-        os.makedirs(f"predictions", exist_ok=True)
+    if not os.path.exists(f"demo_predictions"):
+        os.makedirs(f"demo_predictions", exist_ok=True)
 
     Cameras, filenames = [], []
     x1s_pred, y1s_pred, x2s_pred, y2s_pred = [], [], [], []
@@ -138,7 +138,7 @@ def predict(model, device): ##
         'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
                             'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths})
     
-    results.to_csv(f"predictions/demo_results.csv")
+    results.to_csv(f"demo_predictions/demo_results.csv")
 
     return results
 
