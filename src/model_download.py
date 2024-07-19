@@ -1,23 +1,26 @@
 
 '''
-This script will download the folder with the model and the demo data to a location of your choice. 
+This script will download the folder with the model to a folder called "model". 
 We will use the wget command to download the zip folder. 
 '''
 
 
-
 import os
-import datetime
-import IPython
 
-def wget():
-
-    ## users have read and download access to the following folder
-    ## It contains demo data and model
-    folder = 'https://www.dropbox.com/scl/fo/9go1g2mm6fqr8sdqem7pb/ADsRpJb3LQ8uMY_rju4sni0?rlkey=4mn5rf1c3qjjqv0biu4bl6wp4&st=4lfakejc&dl=0'
+def download_models(): 
+    '''
+    see the Zenodo page for the latest models
+    '''
+    root =  os.getcwd()
+    save_path = f"{root}/models"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path, exist_ok=True)
+    url = 'https://zenodo.org/records/12764696/files/CO_and_WA_model.pth'
     
-    command = f'wget {folder}' 
-    print(command)
-    os.system(command)
-
-wget()
+    # download if does not exist  
+    if not os.path.exists(f'{save_path}/CO_and_WA_model.pth'):
+        wget_command = f'wget {url} -P {save_path}'
+        os.system(wget_command)
+        return print('\n models download! \n')
+    else:
+        return print('model already saved')
