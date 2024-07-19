@@ -50,7 +50,7 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
-    plt.savefig(f"demo_predictions/image_{file}.png")
+    plt.savefig(f"demo_predictions/pred_{file}.png")
     plt.close()
 
 def load_model(device):
