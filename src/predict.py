@@ -10,7 +10,7 @@ Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning M
 Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
 
 Example run:
-python src/predict.py --model_path 'model/custom_model.pth' --img_dir 'cameras' 
+python src/predict.py --model_path 'model/custom_model.pth' --img_dir 'cameras'  --metadata 'cameras/camera_metadata.csv'
 
 
 '''
@@ -20,7 +20,6 @@ import numpy as np
 import cv2
 import albumentations  ## may need to do pip install
 import config
-#import config_cpu as config
 from model import snowPoleResNet50
 import argparse
 import glob
@@ -28,7 +27,6 @@ import IPython
 import utils
 import pandas as pd
 from tqdm import tqdm
-from scipy.spatial import distance
 import os
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
@@ -153,8 +151,8 @@ def predict(model, args, device): ##
                 ## if you don't have a metadata stored properly it will just insert a 0 for snowdepth
                 snow_depths.append(0)
             
-    results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, \
-        'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
+    results = pd.DataFrame({'camera_id':Cameras, 'filename':filenames, \
+        'x1_pred': x1s_pred, 'y1_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
                             'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths})
     
     results.to_csv(f"predictions/results.csv")
