@@ -10,7 +10,7 @@ Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning M
 Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
 
 Example run:
-python src/predict.py --model_path 'model/custom_model.pth' --img_dir 'cameras'  --metadata 'cameras/camera_metadata.csv'
+python src/predict.py --model_path './output1/model.pth' --img_dir './example_nontrained_data'  --metadata './example_nontrained_data/pole_metadata.csv'
 
 
 '''
@@ -58,7 +58,7 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
-    plt.savefig(f"predictions/image_{file}.png")
+    plt.savefig(f"predictions/pred_{file}.png")
     plt.close()
 
 def load_model(args):
@@ -169,8 +169,8 @@ def main():
     args = parser.parse_args()
 
     model = load_model(args)
-
-    predict(model, args)  
+    device = 'cpu'
+    predict(model, args, device)  
 
 if __name__ == '__main__':
     main()
