@@ -10,7 +10,7 @@ Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning M
 Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
 
 Example run:
-python src/predict.py --model_path './output1/model.pth' --img_dir './example_nontrained_data'  --metadata './example_nontrained_data/pole_metadata.csv'
+python src/predict.py --model_path './output1/model.pth' --img_dir './nontrained_data'  --metadata './nontrained_data/pole_metadata.csv'
 
 
 '''
