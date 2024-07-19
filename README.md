@@ -87,7 +87,7 @@ python src/predict.py --model_path [PATH TO CUSTOMIZED MODEL] --img_dir [IMAGE D
 ```
 EXAMPLE:
 ```
-python src/predict.py --model_path './output1/model.pth' --img_dir './example_nontrained_data'  --metadata './example_nontrained_data/pole_metadata.csv'
+python src/predict.py --model_path './output1/model.pth' --img_dir './nontrained_data'  --metadata './nontrained_data/pole_metadata.csv'
 
 ```
 
@@ -101,7 +101,7 @@ python src/predict.py --model_path [PATH TO CUSTOMIZED MODEL] --img_folder [IMAG
 
 EXAMPLE:
 ```
-python src/predict.py --model_path './output1/model.pth' --img_folder './example_nontrained_data/TLS-A1N'  --metadata './example_nontrained_data/pole_metadata.csv'
+python src/predict.py --model_path './output1/model.pth' --img_folder './nontrained_data/TLS-A1N'  --metadata './nontrained_data/pole_metadata.csv'
 ```
 
 **Note: the script only allows for a img_dir OR a img_folder because of how it uploads the images to local memory. Please use only one argument or the other. If both are provided, it will default to img_dir.
