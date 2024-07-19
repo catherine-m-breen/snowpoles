@@ -1,11 +1,17 @@
 '''
-load model and run on data points 
-export the csv of the data points and just use the bottom
+written by: Catherine Breen
+July 1, 2024
 
-example command line to run:
+Training script for users to fine tune model from Breen et. al 2024
+Please cite: 
 
-python src/predict.py --image_path '/Volumes/CatBreen/CV4ecology/SNEX20_TLI_resized/CHE10' --output_path '/Volumes/CatBreen/Chewelah_resized'
-python src/predict.py --model_path '/Users/catherinebreen/Documents/Chapter1/WRRsubmission/manuscript/model' --folder_path '/Users/catherinebreen/code/snow-Dayz/snowpoles/example_data/cam1' --output_path '/Users/catherinebreen/Documents' --dir_path '/Users/catherinebreen/code/snow-Dayz/snowpoles/example_data'
+Breen, C. M., Currier, W. R., Vuyovich, C., Miao, Z., & Prugh, L. R. (2024). 
+Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning Model. 
+Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
+
+Example run:
+python src/predict.py --model_path 'model/custom_model.pth' --img_dir 'cameras' 
+
 
 '''
 
@@ -27,121 +33,141 @@ import os
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
 
+def download_models(): 
+    '''
+    see the Zenodo page for the latest models
+    '''
+    root =  os.getcwd()
+    save_path = f"{root}/models"
+    if not os.path.exists(save_path):
+        os.makedirs(save_path, exist_ok=True)
+    url = 'https://zenodo.org/records/12764696/files/CO_and_WA_model.pth'
+    
+    # download if does not exist  
+    if not os.path.exists(f'{save_path}/CO_and_WA_model.pth'):
+        wget_command = f'wget {url} -P {save_path}'
+        os.system(wget_command)
+        return print('\n models download! \n')
+    else:
+        return print('model already saved')
+    
+def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15):
+    file = file.split('.')[0]
+    output_keypoint = keypoints.reshape(-1, 2)
+    plt.imshow(image)
+    for p in range(output_keypoint.shape[0]):
+        if p == 0: 
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
+        else:
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
+    plt.savefig(f"predictions/image_{file}.png")
+    plt.close()
+
 def load_model(args):
     model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
     # load the model checkpoint
-    if args.model_path == 'NULL':
-        checkpoint = torch.load(config.OUTPUT_PATH + '/model_epoch50.pth', map_location=torch.device('mps')) 
-    else: 
-        #### Load the model based on how the user download the code folder to computer 
-        checkpoint = torch.load(args.model_path + '/model_epoch50.pth', map_location=torch.device('cpu')) 
+    if args.model_path == 'models/CO_and_WA_model.pth': ## uses model from paper
+        model_path = 'models/CO_and_WA_model.pth'  
+        checkpoint = torch.load(model_path, map_location=torch.device(config.DEVICE)) 
+    else: ## your customized model
+        checkpoint = torch.load(args.model_path, map_location=torch.device('cpu')) 
 
-    #checkpoint = torch.load()
-    # load model weights state_dict
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model
 
-def predict(model, args): ## try this without a dataloader
-    #files =  glob.glob(args.image_path + ('/**/*.JPG'))
-    #df_data = pd.read_csv(f"{config.ROOT_PATH}/snowPoles_labels.csv")
+def predict(model, args, device): ## 
  
-    if not os.path.exists(f"{args.output_path}/predictions"):
-        os.makedirs(f"{args.output_path}/predictions", exist_ok=True)
+    if not os.path.exists(f"predictions"):
+        os.makedirs(f"predictions", exist_ok=True)
 
     Cameras, filenames = [], []
     x1s_pred, y1s_pred, x2s_pred, y2s_pred = [], [], [], []
     total_length_pixels = []
+    snow_depths = []
+
+    ## folder or directory
+    snowpolefiles1 = glob.glob(f"{args.img_folder}/*")
+    snowpolefiles2 = glob.glob(f"{args.img_dir}/**/*")
     
-    snowpolefiles1 = glob.glob(f"{args.folder_path}/*")
-    snowpolefiles2 = glob.glob(f"{args.dir_path}/**/*")
-    
-    if args.dir_path != '/example_data':
+    ## checks for a directory
+    if args.img_dir != '/example_data': 
         snowpolefiles = snowpolefiles2
-    else:
+    else: # assumes it is a camerafolder
         snowpolefiles = snowpolefiles1
 
-    #num_batches = int(len(data)/dataloader.batch_size)
+    metadata = pd.read_csv(f"{args.img_dir}/pole_metadata.csv")
+    
     with torch.no_grad():
-        for i, file in tqdm(enumerate(snowpolefiles)): #, total=num_batches):
-      
-            ## because not using the dataset.py we will do it manually ##
+        for i, file in tqdm(enumerate(snowpolefiles)): 
+    
             image = cv2.imread(file)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             h, w, *_ = image.shape
-            #IPython.embed()
             image = cv2.resize(image, (224,224))
             image = image / 255.0   
 
-           # again reshape to add grayscale channel format
+            # again reshape to add grayscale channel format
             filename = file.split('/')[-1]
-            Camera = filename.split('_')[0]
+            Camera = filename.split('/')[-1] ## assumes in a folder with camera name ('cam1', 'cam2', etc)
             
             ## add an empty dimension for sample size
-            image = np.transpose(image, (2, 0, 1)) ## to get channels to line up
+            image = np.transpose(image, (2, 0, 1)) ## 
             image = torch.tensor(image, dtype=torch.float)
             image = image.unsqueeze(0)
-            image = image.to(config.DEVICE)
+            image = image.to(device)
 
             #######
             outputs = model(image)
-            ## below is adjusted for M1 max
-            outputs = outputs.cpu().numpy() #outputs.detach().numpy()
-            #output_list.append(outputs)
+            outputs = outputs.cpu().numpy() 
             pred_keypoint = np.array(outputs[0], dtype='float32')
 
-            #### rescale to 448 x 448 because that is what the images are stored in: 
-            ###########
             image = image.squeeze()
             image = image.cpu()
             image = np.transpose(image, (1, 2, 0))
             image = np.array(image, dtype='float32')
-            #image = cv2.resize(image, (448,448))
-            #pred_keypoint = pred_keypoint * [448 / 224] #keypoints * [self.resize / orig_w, self.resize / orig_h]
-            IPython.embed()
+
+            ## resize back up to original size and project predicted points onto original size
             image = cv2.resize(image, (w, h))
             pred_keypoint[0] = pred_keypoint[0] * (w / 224)
             pred_keypoint[2] = pred_keypoint[2] * (w /224)
             pred_keypoint[1] = pred_keypoint[1] * (h / 224)
             pred_keypoint[3] = pred_keypoint[3] * (h /224)
-            ###########
 
-            utils.vis_predicted_keypoints(args, filename, image, pred_keypoint,) ## visualize points
+            vis_predicted_keypoints(filename, image, pred_keypoint,) 
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
             
             Cameras.append(Camera)
             filenames.append(filename)
             x1s_pred.append(x1_pred), y1s_pred.append(y1_pred), x2s_pred.append(x2_pred), y2s_pred.append(y2_pred)
-                ## error
             total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
             total_length_pixels.append(total_length_pixel)
 
-    #IPython.embed()
+            ## snow depth conversion ## 
+            full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length'].values[0]
+            pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
+            snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
+            snow_depths.append(snow_depth)
+            
     results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, \
-        'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, 'total_length_pixel': total_length_pixels})
-
-    results.to_csv(f"{args.output_path}/predictions/{Camera}_results.csv")
+        'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
+                            'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths})
+    
+    results.to_csv(f"predictions/results.csv")
 
     return results
 
 def main():
     # Argument parser for command-line arguments:
-    # python code/train.py --output model_runs
     parser = argparse.ArgumentParser(description='Predict top and bottom coordinates.')
-    parser.add_argument('--model_path', required=False, help = 'Path to model', default = 'NULL')
-    parser.add_argument('--dir_path', required=False, help='Path to camera image directory', default = '/example_data')
-    parser.add_argument('--folder_path', required=False, help='Path to camera image folder', default = "/example_data/cam1")
-    parser.add_argument('--output_path', required=True, help='Path to output folder', default = "/example_data")
+    parser.add_argument('--model_path', required=False, help = 'Path to model', default = 'models/CO_and_WA_model.pth')
+    parser.add_argument('--img_dir', required=False, help='Path to camera image directory', default = '/example_data')
+    parser.add_argument('--img_folder', required=False, help='Path to camera image folder', default = "/example_data/cam1")
     args = parser.parse_args()
 
-
-    #args = parser.parse_args()
     model = load_model(args)
 
-    ## returns a set of images of outputs
-    outputs = predict(model, args)  
-
-    #results = eval(outputs)
+    predict(model, args)  
 
 if __name__ == '__main__':
     main()
