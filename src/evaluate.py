@@ -1,31 +1,27 @@
 '''
+
 load model and run on data points 
 export the csv of the data points and just use the bottom
 
 example command line to run:
 
+(make sure config file is set to the right model!)
+python src/evaluate.py
 
 '''
 
 import torch
 import numpy as np
-import cv2
-import albumentations  ## may need to do pip install
 import config
-#import config_cpu as config
 from model import snowPoleResNet50
-import argparse
-import glob
 import IPython
 import utils
 import pandas as pd
-from dataset import train_data, valid_data, wa_data, co_data, wa_testdata, co_testdata
+from dataset import train_data, valid_data
 from tqdm import tqdm
 from scipy.spatial import distance
 import os
 import matplotlib.pyplot as plt
-import math
-
 
 def load_model():
     model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
@@ -38,20 +34,7 @@ def load_model():
     return model
 
 
-'''
-We will use part of the valid function to write our predict function. It will be very similiar except
-that it will use the last model, and we will just use the dataset, not the dataloader.
-
-It is a little bit easier to flatten this way. 
-
-'''
-
-
-def predict(model, data, eval='eval'): ## try this without a dataloader
-    ## eval is the method, whether eval or test
-    #files =  glob.glob(args.image_path + ('/**/*.JPG'))
-    #df_data = pd.read_csv(f"{config.ROOT_PATH}/snowPoles_labels.csv")
-    #IPython.embed()
+def predict(model, data, eval='eval'): 
 
     if not os.path.exists(f"{config.OUTPUT_PATH}/{eval}"):
         os.makedirs(f"{config.OUTPUT_PATH}/{eval}", exist_ok=True)
@@ -68,9 +51,11 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
 
     automated_sds, manual_sds, diff_sds = [], [], []
 
+    metadata =  pd.read_csv(f"{config.metadata}")
+    labels =  pd.read_csv(f"{config.labels}")
 
     with torch.no_grad():
-        for i, data in tqdm(enumerate(data)): #, total=num_batches):
+        for i, data in tqdm(enumerate(data)): 
             image, keypoints = data['image'].to(config.DEVICE), data['keypoints'].to(config.DEVICE)
             filename = data['filename']
             Camera = filename.split('_')[0]
@@ -81,7 +66,6 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
             ## add an empty dimension for sample size
             image = image.unsqueeze(0)
             outputs = model(image)
-            #IPython.embed()
             outputs = outputs.detach().cpu().numpy()
             
             utils.eval_keypoints_plot(filename, image, outputs, eval, orig_keypoints=keypoints) ## visualize points
@@ -94,13 +78,17 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
             x1s_pred.append(x1_pred), y1s_pred.append(y1_pred), x2s_pred.append(x2_pred), y2s_pred.append(y2_pred)
 
             ## outputs proj and in cm
-            outputs_cm = utils.outputs_in_cm(Camera, filename, x1_pred, y1_pred, x2_pred, y2_pred)
+            total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
+            full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['first_pole_length_cm'].values[0]
+            pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['conversion'].values[0] 
+            automated_sd = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
             
-            automated_sd = outputs_cm['snow_depth']
             automated_sds.append(automated_sd)
 
             # ## difference between automated and manual
-            manual_snowdepth, difference = utils.diffcm(Camera, filename, automated_sd)
+            manual_pixel_length = labels[labels['filename'] == filename]['PixelLengths'].values[0]
+            manual_snowdepth = full_length_pole_cm - (pixel_cm_conversion * manual_pixel_length)
+            difference = manual_snowdepth - automated_sd
             manual_sds.append(manual_snowdepth), diff_sds.append(difference)
 
             ## error
@@ -109,7 +97,7 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
             total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
             total_length_pixel_actual = distance.euclidean([x1_true,y1_true],[x2_true,y2_true])
 
-                        #MAPE
+            # MAPE
             mape_error = utils.MAPE(total_length_pixel_actual, total_length_pixel)
             mape_error_sd = utils.MAPE(manual_snowdepth, automated_sd)
             mape_errors_sd.append(mape_error_sd)
@@ -117,22 +105,10 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
             top_pixel_errors.append(top_pixel_error), bottom_pixel_errors.append(bottom_pixel_error), total_length_pixels.append(total_length_pixel)
             total_length_pixel_actuals.append(total_length_pixel_actual), mape_errors.append(mape_error)
     
-
-    #IPython.embed()
     results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, 'x1_true':x1s_true, 'y1_true':y1s_true, 'x2_true':x2s_true, 'y2_true':y2s_true, \
         'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, 'top_pixel_error': top_pixel_errors, \
             'bottom_pixel_error': bottom_pixel_errors, 'total_length_pixel': total_length_pixels, 'total_length_pixel_actual': total_length_pixel_actuals,
             'automated_depth':automated_sds,'manual_snowdepth':manual_sds,'difference':diff_sds, 'mape':mape_errors,'mape_sd':mape_errors_sd})
-    
-    if eval == 'wa_wo_trainingdata':
-        #IPython.embed()
-        FT_training_data = pd.read_csv(f'{config.OUTPUT_PATH}/FT_training_samples.csv') ## this isn't the training data!
-        FT_training_data = FT_training_data['filename']
-        print(f"# of training examples in FT model, {len(FT_training_data)}")
-        results = results[~results['filename'].isin(FT_training_data)].reset_index() 
-        top_pixel_errors, bottom_pixel_errors = results['top_pixel_error'], results['bottom_pixel_error']
-        mape_errors, diff_sds, mape_errors_sd = results['mape'], results['difference'], results['mape_sd']
-    
 
     #### overall average
     print('Overall Top Pixel Error')
@@ -147,26 +123,13 @@ def predict(model, data, eval='eval'): ## try this without a dataloader
     print(f"{np.mean(mape_errors_sd)} +/- {np.std(mape_errors_sd)} \n")
     print("\n")
 
-    results.to_csv(f"{config.OUTPUT_PATH}/{eval}/results.csv")
-
-    ### track all results & experiments ?
+    results.to_csv(f"{config.OUTPUT_PATH}/{eval}/evaluation_results.csv")
     return results
 
 def main():
     model = load_model()
-
-    # ## returns a set of images of outputs
-    # outputs = predict(model, valid_data, eval='eval')  
-
-    # # print(f"the results for all WA images... \n")
-    # # outputs = predict(model, wa_data, eval='wa')
-
-    # print(f"FINE-TUNED results (only relevant if fine-tuned model) \n")
-    # print(f"the results for all 892 CO val images... \n ")
-    # outputs = predict(model, co_data, eval='co')
-
-    print(f"Results for the wa imags without the training data \n")
-    outputs = predict(model, wa_data, eval='wa')
+    print('results on valid data\n')
+    outputs = predict(model, valid_data, eval='wa')
 
 if __name__ == '__main__':
     main()
