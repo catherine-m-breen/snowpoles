@@ -49,8 +49,8 @@ def main():
     creationTimes = []
 
     ## customized data
-    pole_length = np.fromstring(args.pole_length)
-    subset_to_label = np.fromstring(args.pole_length)
+    pole_length = np.float64(args.pole_length)
+    subset_to_label = np.int16(args.subset_to_label)
 
     ## some metadata data
     cameraIDs= []
@@ -60,12 +60,17 @@ def main():
     widths, heights = [], []
 
     ### loop to label every nth photo!
-    for i, file in tqdm.tqdm(enumerate(dir)): 
-       if i % subset_to_label == 0: 
+    i = 0
+    for j, file in tqdm.tqdm(enumerate(dir)): 
+        cameraID = file.split('/')[-2] 
+        cameraIDs.append(cameraID)
+
+        ##whether to start counter over
+        i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
+        if i % subset_to_label == 0: 
             img = cv2.imread(file)
             width, height, channel = img.shape
             ## assumes the cameras are stored in folder with their camera name 
-            cameraID = file.split('/')[-1] 
             plt.figure(figsize = (20,10))
             plt.imshow(img)
             plt.title('label top and then bottom', fontweight = "bold")
@@ -93,18 +98,20 @@ def main():
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
-            cameraIDs.append(cameraID)
+        i+=1
+        print(i)
 
     df = pd.DataFrame({'filename':filename, 'datetime':creationTimes, 'x1':topX,'y1':topY, 'x2':bottomX,
                         'y2':bottomY, 'PixelLengths':PixelLengths}) 
     
     ## simplified table for snow depth conversion later on
+    IPython.embed()
     metadata = pd.DataFrame({'camera_id':pd.unique(cameraIDs), 'first_pole_length_cm':pole_lengths,
                              'first_pole_length_px':(first_pole_pixel_length), 
                              'conversion':pd.unique(conversions),'width':widths,'height':heights})
     
-    df.to_csv(f'{args.savedir}/labels.csv') 
-    metadata.to_csv(f'{args.savedir}/metadata.csv')
+    df.to_csv(f'{args.datapath}/labels.csv') 
+    metadata.to_csv(f'{args.datapath}/pole_metadata.csv')
 
 if __name__ == '__main__':
     main()
