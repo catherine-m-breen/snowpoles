@@ -38,7 +38,7 @@ def main():
         try: 
             camera = filename.split('/')[-1]
         
-            full_length_pole_cm = metadata.loc[metadata['camera_id'] == camera, 'pole_length'].iloc[0]
+            full_length_pole_cm = metadata.loc[metadata['camera_id'] == camera, 'pole_length_cm'].iloc[0]
             pixel_cm_conversion = metadata.loc[metadata['camera_id'] == camera, 'pixel_cm_conversion'].iloc[0]
             #IPython.embed()
             ## need to scale back up 
