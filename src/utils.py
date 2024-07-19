@@ -1,8 +1,3 @@
-'''
-support functions for running model and for experiments from Breen et al. 2024 
-
-'''
-
 import matplotlib.pyplot as plt
 import numpy as np
 import config
