@@ -143,7 +143,7 @@ def predict(model, args, device): ##
 
             ## snow depth conversion ## 
             try: 
-                full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length'].values[0]
+                full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length_cm'].values[0]
                 pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
                 snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
                 snow_depths.append(snow_depth)
