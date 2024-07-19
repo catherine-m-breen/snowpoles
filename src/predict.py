@@ -96,7 +96,7 @@ def predict(model, args, device): ##
     else: # assumes it is a camerafolder
         snowpolefiles = snowpolefiles1
 
-    metadata = pd.read_csv(f"{args.img_dir}/pole_metadata.csv")
+    metadata = pd.read_csv(f"{args.metadata}")
     
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
@@ -144,10 +144,14 @@ def predict(model, args, device): ##
             total_length_pixels.append(total_length_pixel)
 
             ## snow depth conversion ## 
-            full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length'].values[0]
-            pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
-            snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
-            snow_depths.append(snow_depth)
+            try: 
+                full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length'].values[0]
+                pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
+                snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
+                snow_depths.append(snow_depth)
+            except: 
+                ## if you don't have a metadata stored properly it will just insert a 0 for snowdepth
+                snow_depths.append(0)
             
     results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, \
         'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
@@ -163,6 +167,7 @@ def main():
     parser.add_argument('--model_path', required=False, help = 'Path to model', default = 'models/CO_and_WA_model.pth')
     parser.add_argument('--img_dir', required=False, help='Path to camera image directory', default = '/example_data')
     parser.add_argument('--img_folder', required=False, help='Path to camera image folder', default = "/example_data/cam1")
+    parser.add_argument('--metadata', required=False, help='Path to pole metadata', default = "/example_data/pole_metadata.csv")
     args = parser.parse_args()
 
     model = load_model(args)
