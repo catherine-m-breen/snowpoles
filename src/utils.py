@@ -1,11 +1,14 @@
+'''
+support functions for running model and for experiments from Breen et al. 2024 
+
+'''
+
 import matplotlib.pyplot as plt
 import numpy as np
 import config
-#import config_cpu as config ## for cpu training
 import IPython
 import cv2 
 import argparse
-
 import math
 import pandas as pd 
 import glob
@@ -80,8 +83,7 @@ def eval_keypoints_plot(file, image, outputs, eval, orig_keypoints):
     outputs = outputs #.detach().cpu().numpy()
     orig_keypoints = orig_keypoints #.detach().cpu().numpy()#orig_keypoints.detach().cpu().numpy()
     # just get a single datapoint from each batch
-    #img = image[0]
-    output_keypoint = outputs[0] ## don't know why but it is technically nested
+    output_keypoint = outputs[0] 
     img = np.array(image, dtype='float32')
     img = np.transpose(img, (1, 2, 0))
     plt.imshow(img)
@@ -98,28 +100,20 @@ def eval_keypoints_plot(file, image, outputs, eval, orig_keypoints):
     plt.savefig(f"{config.OUTPUT_PATH}/{eval}/{eval}_{file}.png")
     plt.close()
 
-
-#def object_keypoint_similarity()
 def vis_keypoints(image, keypoints, color=(0,255,0), diameter=15):
     image = image.copy()
 
     for (x, y) in keypoints:
         print(x, y)
         cv2.circle(image, (int(x), int(y)), diameter, (0, 255, 0), -1)
-        
-    #plt.figure(figsize=(8, 8))
-    #plt.axis('off')
+
     plt.imshow(image)
     plt.show()
     plt.close()
 
 
 def vis_predicted_keypoints(args, file, image, keypoints, color=(0,255,0), diameter=15):
-    # image = image.squeeze()
-    # image = image.cpu()
     output_keypoint = keypoints.reshape(-1, 2)
-    # image = np.transpose(image, (1, 2, 0))
-    # image = np.array(image, dtype='float32')
 
     plt.imshow(image)
     for p in range(output_keypoint.shape[0]):
@@ -131,41 +125,17 @@ def vis_predicted_keypoints(args, file, image, keypoints, color=(0,255,0), diame
     plt.close()
    
 
-############################ turn into object?
-
-def camres(Camera):    ## first get resolution dictionary (move to utils eventually)
-    # nativeRes_imgs = glob.glob(f"{config.res_info_path}/*") ## just 29 example images
-    # camIDs = []
-    # nativeRes = []
-    # orig_hs = []
-    # orig_ws = []
-
-    # # ## turn into dictionary 
-    # for img in nativeRes_imgs:
-    #      camID = img.split('/')[-1].split('_')[0]
-    #      image = cv2.imread(img)
-    #      orig_h, orig_w, channel = image.shape
-    #      camIDs.append(camID), orig_hs.append(orig_h), orig_ws.append(orig_w)
-    #      #nativeRes.append([orig_h, orig_w])
-
-    # #resDic = dict(zip(camIDs, nativeRes))
-    # #CamRes = resDic[Camera] ## test this but this is what you want to return
-    # df = pd.DataFrame({'camID':camIDs,'orig_h':orig_hs, 'orig_w':orig_ws})
-    # df.to_csv('/Users/catherinebreen/Documents/Chapter1/WRRsubmission/nativeRes.csv')
-    
+def camres(Camera):    
     df = pd.read_csv(f'{config.native_res_path}')
-    # CamRes = df.loc[df['camID'] == Camera, 'nativeRes'].iloc[0]
     try: 
         orig_w = df.loc[df['camID'] == Camera, 'orig_w'].iloc[0]
         orig_h = df.loc[df['camID'] == Camera, 'orig_h'].iloc[0]
     except: 
         print('error')
-        IPython.embed()
     return orig_w, orig_h 
 
 
 def conversionDic(Camera):
-        ## now get the resulting predicted x and ys 
     conversion_table = pd.read_csv(f'{config.snowfreetbl_path}')
     convDic = dict(zip(conversion_table['camera'], conversion_table['conversion']))
     conversion = convDic[Camera]
@@ -185,11 +155,10 @@ def outputs_in_cm(Camera, filename, x1s_pred, y1s_pred, x2s_pred, y2s_pred):
     keypoints = [x1s_pred, y1s_pred, x2s_pred, y2s_pred]
     keypoints = np.array(keypoints, dtype='float32')
     keypoints = keypoints.reshape(-1, 2)
-    #IPython.embed()
-    keypoints = keypoints * [orig_w / 224, orig_h / 224] ### orig_w: resDic[1]; orig_h: resDic[0]
+    keypoints = keypoints * [orig_w / 224, orig_h / 224] 
     
     proj_pix_length = math.dist(keypoints[0], keypoints[1])
-    proj_cm_length = proj_pix_length * float(conversion) ## this is pix * cm/pix conversion for each camera
+    proj_cm_length = proj_pix_length * float(conversion) 
     snow_depth = snowfreestake_cm - float(proj_cm_length)
     x1_proj, y1_proj, x2_proj, y2_proj = keypoints[0][0], keypoints[0][1], keypoints[1][0], keypoints[1][1]
   
@@ -205,28 +174,21 @@ def datetimeExtrac(filename):
     fileDatetime = datetimeinfo.loc[datetimeinfo['filenames'] == filename, 'datetimes'].iloc[0]
     return fileDatetime 
 
-#IPython.embed()
-
 def diffcm(Camera, filename, automated_snow_depth):
-        #from utils (and also .snow_pole_analysis) import datetimeExtrac
-    ## dictionary of just the SnowEx photos ##
-    ## look up actual snow depth from the published data on SnowEx.com...
+
     fileDatetime = datetimeExtrac(filename)
     actual_snow_depth = pd.read_csv(f'{config.manual_labels_path}') ## add CH and OK poles using conversions
 
-    ## look up in actual_snow_depth table
-    try: ## make sure to change it back to Camera, Date&Time, Snow Depth (cm)
+    try: 
         sd = float(actual_snow_depth[(actual_snow_depth['camera']==Camera) & (actual_snow_depth['dates']==fileDatetime)]['snowDepth'])
         manual_snowdepth = sd
         difference = manual_snowdepth - automated_snow_depth
     except:
-        # because it was cleaned, there will be some data not included
         manual_snowdepth = 'na'
         difference = 'na'
 
     return manual_snowdepth, difference
 
- #Defining MAPE function
 def MAPE(Y_actual,Y_Predicted):
     mape = ((np.abs(Y_actual - Y_Predicted)/Y_actual)*100)
     return mape
