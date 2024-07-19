@@ -1,6 +1,6 @@
 '''
 written by: Catherine Breen
-July 1, 2024
+June 2024
 
 Training script for users to fine tune model from Breen et. al 2024
 Please cite: 
