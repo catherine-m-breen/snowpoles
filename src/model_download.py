@@ -24,3 +24,5 @@ def download_models():
         return print('\n models download! \n')
     else:
         return print('model already saved')
+
+download_models()
