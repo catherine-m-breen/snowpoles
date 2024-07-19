@@ -105,9 +105,9 @@ def main():
                         'y2':bottomY, 'PixelLengths':PixelLengths}) 
     
     ## simplified table for snow depth conversion later on
-    metadata = pd.DataFrame({'camera_id':pd.unique(cameraIDs), 'first_pole_length_cm':pole_lengths,
-                             'first_pole_length_px':(first_pole_pixel_length), 
-                             'conversion':pd.unique(conversions),'width':widths,'height':heights})
+    metadata = pd.DataFrame({'camera_id':pd.unique(cameraIDs), 'pole_length_cm':pole_lengths,
+                             'pole_length_px':(first_pole_pixel_length), 
+                             'pixel_cm_conversion':pd.unique(conversions),'width':widths,'height':heights})
     
     df.to_csv(f'{args.datapath}/labels.csv') 
     metadata.to_csv(f'{args.datapath}/pole_metadata.csv')
