@@ -39,18 +39,22 @@ Our findings suggested that some labeling of the dataset of interest improved th
     - '--datapath' assumes that your original iamges are saved in a nested subfolder from the root folder called "data". Each camera folder has a unique folder ID that matches the camera ID.
     - '--pole_length' height of your poles. If they are varying you will need to run this on each individual folder and then combine all the labels into one csv.
     - 'subset_to_label' this is the spacing between images for each camera. We found that the model is more accurate with less space between images, but about every 10 was the right sequence
+ 
+Note: our script "rename_photos.py" checks that the image filenames are in the right format and updates them if not. It assumes the images are in the following tree: image dir > image folder with camera id > filename (see nontrained_data). 
 
 GENERIC:
 ```
+python preprocess/rename_photos.py 
 python src/labeling.py --datapath [IMAGE_DIRECTORY] --pole_length [POLE LENGTH IN CM] --subset_to_label [# BETWEEN LABELED IMAGES]
 ```
 EXAMPLE:
 ```
-python src/labeling.py --datapath 'example_nontrained_data' --pole_length '304.8' --subset_to_label '10'
+python preprocess/rename_photos.py 
+python src/labeling.py --datapath 'nontrained_data' --pole_length '304.8' --subset_to_label '10'
 ```
 
 > [!NOTE]  
-> The example 'example_nontrained_data' above uses data that was not included in the paper, from the NASA SnowEx 2017 campaign (Raliegh et al. 2022). We used these images to beta test this pipeline further. Simply update this folder with your data of interest! 
+> The example 'nontrained_data' folder above uses data that was not included in the paper, from the NASA SnowEx 2017 campaign (Raliegh et al. 2022). We used these images to beta test this pipeline further. Simply delete the contents of this folder and replace with the camera folders with your images. We left the data in there so you can see how we organized the camera folders and what labeling.py will generate (labels.csv and metadata.csv)
 
 
 ## 2. Fine-tuning model without GPU
