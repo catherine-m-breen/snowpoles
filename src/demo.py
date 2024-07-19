@@ -134,7 +134,7 @@ def predict(model, device): ##
             snow_depths.append(snow_depth)
             
 
-    results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, \
+    results = pd.DataFrame({'camera_id':Cameras, 'filename':filenames, \
         'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
                             'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths})
     
