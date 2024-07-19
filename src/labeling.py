@@ -12,8 +12,11 @@ x2,y2 = bottom
 
 The labels.csv file can then be directly pointed at train.py for fine-tuning. The user can then run predict.py to extract the snow depth.
 
-'''
+example run 
 
+python src/labeling.py --datapath 'example_nontrained_data' --pole_length '304.8' --subset_to_label '10'
+
+'''
 
 import cv2
 import matplotlib.pyplot as plt 
@@ -31,26 +34,38 @@ def main():
 
     # Argument parser for command-line arguments:
     parser = argparse.ArgumentParser(description='Label snowpole images')
-    parser.add_argument('--datapath', help='Path to image dir', default = '/Volumes/CatBreen/Okanagan_Timelapse_Photos/CUB-U-01')
-    parser.add_argument('--savedir', help='Path to save csv', default = '/Users/catherinebreen/Documents/Chapter1/WRRsubmission/data/conversions') 
-    parser.add_argument('--pole_length', help='Length of pole in cm', default = '304.8')
+    parser.add_argument('--datapath', help='Path to image dir')
+    parser.add_argument('--pole_length', help='Length of pole in cm', default = '100') ### assumes poles are 1 m / 100 cm tall 
+    parser.add_argument('--subset_to_label', help='# of images per camera to label', default = '10')
     args = parser.parse_args()
         
     dir = glob.glob(f"{args.datapath}/**/*") #/*") ## path to data directory 
     dir = sorted(dir)
 
+    ## labeling data
     filename = []
     PixelLengths = []
     topX, topY, bottomX, bottomY = [],[],[],[]
     creationTimes = []
-    conversions = []
 
+    ## customized data
     pole_length = np.fromstring(args.pole_length)
+    subset_to_label = np.fromstring(args.pole_length)
 
-    ### loop to label every 10th photo!
+    ## some metadata data
+    cameraIDs= []
+    pole_lengths = [] ## tracks pole length
+    first_pole_pixel_length = []
+    conversions = []
+    widths, heights = [], []
+
+    ### loop to label every nth photo!
     for i, file in tqdm.tqdm(enumerate(dir)): 
-       if i % 10 == 0: 
+       if i % subset_to_label == 0: 
             img = cv2.imread(file)
+            width, height, channel = img.shape
+            ## assumes the cameras are stored in folder with their camera name 
+            cameraID = file.split('/')[-1] 
             plt.figure(figsize = (20,10))
             plt.imshow(img)
             plt.title('label top and then bottom', fontweight = "bold")
@@ -63,22 +78,33 @@ def main():
             PixelLengths.append(PixelLength)
             
             ## to get the pixel to centimeter conversion
+
             if i == 0:
+                ## with the first photo, we will get some metadata
                 conversion = pole_length/PixelLength
+                ## and get metadata
+                first_pole_pixel_length.append(PixelLength)
+                conversions.append(conversion)
+                pole_lengths.append(pole_length)
+                heights.append(height), widths.append(width)
+
             else: pass
-            conversions.append(conversion)
             filename.append(file.split('/')[-1])
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
+            cameraIDs.append(cameraID)
 
-    # avg_conversion = np.average(conversions)
-    # std_conversion = np.std(conversions)  
-    df = pd.DataFrame({'filename':filename, 'datetime':creationTimes, 'x1':topX,'y1':topY, 'x2':bottomX, 'y2':bottomY, 'PixelLengths':PixelLengths, 
-                       'conversions': conversions}) # 'mean': avg_conversion) # 'std': std_conversion})
-    df.to_csv(f'{args.savedir}/labels.csv') # top10_conversion.csv')
+    df = pd.DataFrame({'filename':filename, 'datetime':creationTimes, 'x1':topX,'y1':topY, 'x2':bottomX,
+                        'y2':bottomY, 'PixelLengths':PixelLengths}) 
+    
+    ## simplified table for snow depth conversion later on
+    metadata = pd.DataFrame({'camera_id':pd.unique(cameraIDs), 'first_pole_length_cm':pole_lengths,
+                             'first_pole_length_px':(first_pole_pixel_length), 
+                             'conversion':pd.unique(conversions),'width':widths,'height':heights})
+    
+    df.to_csv(f'{args.savedir}/labels.csv') 
+    metadata.to_csv(f'{args.savedir}/metadata.csv')
 
 if __name__ == '__main__':
-    # This block only gets executed if you call the "train.py" script directly
-    # (i.e., "python snowpole_annotations.py --filepath '[insert filepath here]' ").
     main()
