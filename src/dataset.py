@@ -1,16 +1,14 @@
 '''
-To do:
-put in keypoint columns in the config file and update here
+written by: Catherine Breen
+July 1, 2024
 
-Updates: 
-- switched train/test from random to 16 cameras : 4 cameras (OOD testing)
-- specified columns in keypoints because we have extra columns in our df
-- Specifed the __getitem__ function to look in nested folders of cameraIDs
-    rather than training and testing
-- specified the cameras for validation, 2 from each side, split from in and out of canopy
-- hardcoded the training files path
-- data aug docs: https://albumentations.ai/docs/getting_started/keypoints_augmentation/ 
-- data aug docs cont. : https://albumentations.ai/docs/api_reference/augmentations/transforms/
+Training script for users to fine tune model from Breen et. al 2024
+Please cite: 
+
+Breen, C. M., Currier, W. R., Vuyovich, C., Miao, Z., & Prugh, L. R. (2024). 
+Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning Model. 
+Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
+
 
 '''
 
@@ -34,62 +32,39 @@ from torchvision.transforms import Compose, Resize, ToTensor
 from sklearn.model_selection import train_test_split
 import os
 
-## to get a systematic sample: (already sorted)
-# def sort_within_camera_group(group):
-#     return group.sort_values(by='Filename')
+
 
 # Define a function to sample every third photo
+## Only used for experiments 
 def sample_every_x(group, x):
     indices = np.arange(len(group[1]))
     every_x = len(group[1])//x
-    selected_indices = indices[2::every_x]  # Select every third index starting from index 2
+    selected_indices = indices[2::every_x]  
     return group[1].iloc[selected_indices]
-#####
 
-##### re-write this for out of domain testing
-def train_test_split(csv_path, path, split, aug):
-    
+def train_test_split(csv_path, image_path):
+
     df_data = pd.read_csv(csv_path)
     print(f'all rows in df_data {len(df_data.index)}')
-    
+
     training_samples = df_data.sample(frac=0.8, random_state=100) # same shuffle everytime
     valid_samples = df_data[~df_data.index.isin(training_samples.index)]
 
-    if config.FINETUNE == True:
-        print(f"FINETUNING MODEL n\ ")
-        #IPython.embed()
-        # stratsmp = glob.glob(f"{config.FT_IMG_PATH}/**/*")
-        # stratsmp = [item.split('/')[-1] for item in stratsmp]
-        # certain number every x from camera
-        groups = wa_testdata.groupby('Camera')
-        training_samples = pd.DataFrame()
-        for group in groups: 
-            y = sample_every_x(group, config.FT_sample)
-            training_samples = pd.concat([training_samples, y])
-
-        training_samples = training_samples
-        valid_samples = wa_testdata[~wa_testdata['filename'].isin(training_samples['filename'])].sample(frac=0.1, random_state=100)  # just test on 10$ of WA data
-        
-        if not os.path.exists(f"{config.OUTPUT_PATH}"):
-            os.makedirs(f"{config.OUTPUT_PATH}", exist_ok=True)
-        training_samples.to_csv(f"{config.OUTPUT_PATH}/FT_training_samples.csv")
-        valid_samples.to_csv(f"{config.OUTPUT_PATH}/FT_valid_samples.csv")
-
-    ##### only images that exist
-    all_images = glob.glob(path + ('/**/*.JPG'))
+    ## check to make sure we only use images that exist
+    all_images = glob.glob(image_path + ('/**/*.JPG'))
     filenames = [item.split('/')[-1] for item in all_images]
     valid_samples = valid_samples[valid_samples['filename'].isin(filenames)].reset_index()
     training_samples = training_samples[training_samples['filename'].isin(filenames)].reset_index()
-    
+
+    # save labels to output folder
     if not os.path.exists(f"{config.OUTPUT_PATH}"):
             os.makedirs(f"{config.OUTPUT_PATH}", exist_ok=True)
     training_samples.to_csv(f"{config.OUTPUT_PATH}/training_samples.csv")
     valid_samples.to_csv(f"{config.OUTPUT_PATH}/valid_samples.csv")
 
     print(f'# of examples we will now train on {len(training_samples)}, val on {len(valid_samples)}')
-    
-    return training_samples, valid_samples
 
+    return training_samples, valid_samples
 
 class snowPoleDataset(Dataset):
 
@@ -118,13 +93,13 @@ class snowPoleDataset(Dataset):
         return len(self.data)
 
     def __filename__(self, index):
+
         filename = self.data.iloc[index]['filename']
         return filename
     
     def __getitem__(self, index):
-        cameraID = self.data.iloc[index]['filename'].split('_')[0] ## need this to get the right folder
+        cameraID = self.data.iloc[index]['filename'].split('_')[0] ## may need to update this. 
         filename = self.data.iloc[index]['filename']
-        #IPython.embed()
         
         image = cv2.imread(f"{self.path}/{cameraID}/{self.data.iloc[index]['filename']}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -132,23 +107,24 @@ class snowPoleDataset(Dataset):
         
         # resize the image into `resize` defined above
         image = cv2.resize(image, (self.resize, self.resize))
-        #IPython.embed()
-        # again reshape to add grayscale channel format
         image = image / 255.0
-
         # get the keypoints
-        keypoints = self.data.iloc[index][1:][['x1','y1','x2','y2']] 
+        keypoints = self.data.iloc[index][1:][['x1','y1','x2','y2']]  #[3:7]  ### change to x1 y1 x2 y2
         keypoints = np.array(keypoints, dtype='float32')
         # reshape the keypoints
         keypoints = keypoints.reshape(-1, 2)
+
         keypoints = keypoints * [self.resize / orig_w, self.resize / orig_h]
 
         transformed = self.transform(image=image, keypoints=keypoints)
         img_transformed = transformed['image']
         keypoints = transformed['keypoints']
-    
+
+        # viz training data
+
+        #utils.vis_keypoints(transformed['image'], transformed['keypoints'])
         image = np.transpose(img_transformed, (2, 0, 1))
- 
+
         if len(keypoints) != 2:
             utils.vis_keypoints(transformed['image'], transformed['keypoints'])
 
@@ -159,21 +135,16 @@ class snowPoleDataset(Dataset):
         }
 
 # get the training and validation data samples
-training_samples, valid_samples = train_test_split(f"{config.ROOT_PATH}/snowPoles_labels_clean_jul23upd.csv", f"{config.ROOT_PATH}", 
-                                                   config.TEST_SPLIT, config.AUG)
+training_samples, valid_samples = train_test_split(f"{config.labels}", 
+                                                   f"{config.ROOT_PATH}")
 
 # initialize the dataset - `snowPoleDataset()`
 train_data = snowPoleDataset(training_samples, 
-                                 f"{config.ROOT_PATH}", aug = config.AUG)  
-#IPython.embed()
+                                 f"{config.ROOT_PATH}", aug = config.AUG)  ## we want all folders
+
 valid_data = snowPoleDataset(valid_samples, 
-                                 f"{config.ROOT_PATH}", aug = False) 
+                                 f"{config.ROOT_PATH}", aug = False) # we always want the transform to be the normal transform
 
-wa_data = snowPoleDataset(wa_testdata, 
-                            f"{config.ROOT_PATH}", aug = False) #
-
-co_data = snowPoleDataset(co_testdata, 
-                            f"{config.ROOT_PATH}", aug = False) 
 # prepare data loaders
 train_loader = DataLoader(train_data, 
                           batch_size=config.BATCH_SIZE, 
@@ -185,8 +156,6 @@ valid_loader = DataLoader(valid_data,
 print(f"Training sample instances: {len(train_data)}")
 print(f"Validation sample instances: {len(valid_data)}")
 
-
-# whether to show dataset keypoint plots
 if config.SHOW_DATASET_PLOT:
     utils.dataset_keypoints_plot(train_data)
     utils.dataset_keypoints_plot(valid_data)
