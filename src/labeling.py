@@ -14,7 +14,7 @@ The labels.csv file can then be directly pointed at train.py for fine-tuning. Th
 
 example run 
 
-python src/labeling.py --datapath 'example_nontrained_data' --pole_length '304.8' --subset_to_label '2'
+python src/labeling.py --datapath 'nontrained_data' --pole_length '304.8' --subset_to_label '2'
 
 '''
 
