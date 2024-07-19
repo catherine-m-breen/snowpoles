@@ -102,3 +102,5 @@ python src/depth_conversion.py --predictions_path '/Users/Documents/data/CAMERA1
 ## other resources
 Breen, C. M., C. Hiemstra, C. M. Vuyovich, and M. Mason. (2022). SnowEx20 Grand Mesa Snow Depth from Snow Pole Time-Lapse Imagery, Version 1 [Data Set]. Boulder, Colorado USA. NASA National Snow and Ice Data Center Distributed Active Archive Center. https://doi.org/10.5067/14EU7OLF051V. Date Accessed 04-13-2023.
 
+Raleigh, M. S., W. R. Currier, J. D. Lundquist, P. Houser and C. Hiemstra. 2022. SnowEx17 TimeLapse Imagery, Version 1. [Data Set]. Boulder, Colorado USA. NASA National Snow and Ice Data Center Distributed Active Archive Center. https://doi.org/10.5067/WYRNU50R9L5R. Date Accessed 04-14-2023.
+
