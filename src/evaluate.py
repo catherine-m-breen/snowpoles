@@ -1,138 +1,190 @@
-'''
-
-load model and run on data points 
-export the csv of the data points and just use the bottom
-
-example command line to run:
-
-(make sure config file is set to the right model!)
-python src/evaluate.py
-
-'''
-
-import torch
+import matplotlib.pyplot as plt
 import numpy as np
 import config
-from model import snowPoleResNet50
 import IPython
-import utils
-import pandas as pd
-from dataset import train_data, valid_data
-from tqdm import tqdm
-from scipy.spatial import distance
-import os
-import matplotlib.pyplot as plt
+import cv2 
+import argparse
+import math
+import pandas as pd 
+import glob
+import PIL
+from PIL import Image
+from PIL import ExifTags
 
-def load_model():
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
-    # load the model checkpoint
-    checkpoint = torch.load(config.OUTPUT_PATH + '/model.pth')
-    print(f"loading model from the following path: {config.OUTPUT_PATH}")
-    # load model weights state_dict
-    model.load_state_dict(checkpoint['model_state_dict'])
-    model.eval()
-    return model
-
-
-def predict(model, data, eval='eval'): 
-
-    if not os.path.exists(f"{config.OUTPUT_PATH}/{eval}"):
-        os.makedirs(f"{config.OUTPUT_PATH}/{eval}", exist_ok=True)
-
-    output_list = []
-    Cameras, filenames = [], []
-    x1s_true, y1s_true, x2s_true, y2s_true = [], [], [], []
-    x1s_pred, y1s_pred, x2s_pred, y2s_pred = [], [], [], []
-    top_pixel_errors, bottom_pixel_errors, total_length_pixels = [], [], []
-    total_length_pixel_actuals = []
-    mape_errors = []
-    mape_errors_sd = []
-    mape_errors_sd_clean = []
-
-    automated_sds, manual_sds, diff_sds = [], [], []
-
-    metadata =  pd.read_csv(f"{config.metadata}")
-    labels =  pd.read_csv(f"{config.labels}")
-
-    with torch.no_grad():
-        for i, data in tqdm(enumerate(data)): 
-            image, keypoints = data['image'].to(config.DEVICE), data['keypoints'].to(config.DEVICE)
-            filename = data['filename']
-            Camera = filename.split('_')[0]
-
-            # flatten the keypoints
-            keypoints = keypoints.detach().cpu().numpy().reshape(-1,2)
-            x1_true, y1_true, x2_true, y2_true = keypoints[0,0], keypoints[0,1], keypoints[1,0], keypoints[1,1]
-            ## add an empty dimension for sample size
-            image = image.unsqueeze(0)
-            outputs = model(image)
-            outputs = outputs.detach().cpu().numpy()
-            
-            utils.eval_keypoints_plot(filename, image, outputs, eval, orig_keypoints=keypoints) ## visualize points
-            pred_keypoint = np.array(outputs[0], dtype='float32')
-            x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
-            
-            Cameras.append(Camera)
-            filenames.append(filename)
-            x1s_true.append(x1_true), y1s_true.append(y1_true), x2s_true.append(x2_true), y2s_true.append(y2_true)
-            x1s_pred.append(x1_pred), y1s_pred.append(y1_pred), x2s_pred.append(x2_pred), y2s_pred.append(y2_pred)
-
-            ## outputs proj and in cm
-            total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
-            full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length_cm'].values[0]
-            pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
-            automated_sd = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
-            
-            automated_sds.append(automated_sd)
-
-            # ## difference between automated and manual
-            manual_pixel_length = labels[labels['filename'] == filename]['PixelLengths'].values[0]
-            manual_snowdepth = full_length_pole_cm - (pixel_cm_conversion * manual_pixel_length)
-            difference = manual_snowdepth - automated_sd
-            manual_sds.append(manual_snowdepth), diff_sds.append(difference)
-
-            ## error
-            top_pixel_error = distance.euclidean([x1_true,y1_true], [x1_pred,y1_pred])
-            bottom_pixel_error = distance.euclidean([x2_true,y2_true], [x2_pred,y2_pred])
-            total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
-            total_length_pixel_actual = distance.euclidean([x1_true,y1_true],[x2_true,y2_true])
-
-            # MAPE
-            mape_error = utils.MAPE(total_length_pixel_actual, total_length_pixel)
-            mape_error_sd = utils.MAPE(manual_snowdepth, automated_sd)
-            mape_errors_sd.append(mape_error_sd)
-            
-            top_pixel_errors.append(top_pixel_error), bottom_pixel_errors.append(bottom_pixel_error), total_length_pixels.append(total_length_pixel)
-            total_length_pixel_actuals.append(total_length_pixel_actual), mape_errors.append(mape_error)
+def valid_keypoints_plot(image, outputs, orig_keypoints, epoch):
+    """
+    This function plots the regressed (predicted) keypoints and the actual 
+    keypoints after each validation epoch for one image in the batch.
+    """
+    # detach the image, keypoints, and output tensors from GPU to CPU
+    image = image.detach().cpu()
+    outputs = outputs.detach().cpu().numpy()
+    orig_keypoints = orig_keypoints.detach().cpu().numpy()
+    # just get a single datapoint from each batch
+    img = image[0]  ## something snow in it ## halfway throught the dataset
+    output_keypoint = outputs[0]
+    orig_keypoint = orig_keypoints[0]
+    img = np.array(img, dtype='float32')
+    img = np.transpose(img, (1, 2, 0))
+    plt.imshow(img)
     
-    results = pd.DataFrame({'Camera':Cameras, 'filename':filenames, 'x1_true':x1s_true, 'y1_true':y1s_true, 'x2_true':x2s_true, 'y2_true':y2s_true, \
-        'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, 'top_pixel_error': top_pixel_errors, \
-            'bottom_pixel_error': bottom_pixel_errors, 'total_length_pixel': total_length_pixels, 'total_length_pixel_actual': total_length_pixel_actuals,
-            'automated_depth':automated_sds,'manual_snowdepth':manual_sds,'difference':diff_sds, 'mape':mape_errors,'mape_sd':mape_errors_sd})
-
-    #### overall average
-    print('Overall Top Pixel Error')
-    print(f"{np.mean(top_pixel_errors)} +/- {np.std(top_pixel_errors)} \n")
-    print('Overall Bottom Pixel Error')
-    print(f"{np.mean(bottom_pixel_errors)} +/- {np.std(bottom_pixel_errors)} \n")
-    print(f"Mean Average Percent Error (MAPE):")
-    print(f"{np.mean(mape_errors)} +/- {np.std(mape_errors)} \n")
-    print('Overall difference in cm')
-    print(f"{np.mean(diff_sds)} +/- {np.std(diff_sds)} \n")
-    print('Overall difference in MAPE')
-    print(f"{np.mean(mape_errors_sd)} +/- {np.std(mape_errors_sd)} \n")
-    print("\n")
-
-    results.to_csv(f"{config.OUTPUT_PATH}/{eval}/evaluation_results.csv")
-    return results
-
-def main():
-    model = load_model()
-    print('results on valid data\n')
-    outputs = predict(model, valid_data, eval='wa')
-
-if __name__ == '__main__':
-    main()
+    output_keypoint = output_keypoint.reshape(-1, 2)
+    orig_keypoint = orig_keypoint.reshape(-1, 2)
+    for p in range(output_keypoint.shape[0]):
+        if p == 0: 
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
+            plt.plot(orig_keypoint[p, 0], orig_keypoint[p, 1], 'b.')
+        else:
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
+            plt.plot(orig_keypoint[p, 0], orig_keypoint[p, 1], 'b.')
+    plt.savefig(f"{config.OUTPUT_PATH}/val_epoch_{epoch}.png")
+    plt.close()
 
 
+def dataset_keypoints_plot(data):
+    '''  
+    #  This function shows the image faces and keypoint plots that the model
+    # will actually see. This is a good way to validate that our dataset is in
+    # fact corrent and the faces align wiht the keypoint features. The plot 
+    # will be show just before training starts. Press `q` to quit the plot and
+    # start training.
+    '''
+    plt.figure(figsize=(10, 10))
+    for i in range(9):
+        sample = data[i]
+        img = sample['image']
+        img = np.array(img, dtype='float32') #/255
+        #IPython.embed()
+        img = np.transpose(img, (1, 2, 0))
+        plt.subplot(3, 3, i+1)
+        plt.imshow(img)
+        keypoints = sample['keypoints']
+        for j in range(len(keypoints)):
+            plt.plot(keypoints[j, 0], keypoints[j, 1], 'b.')
+    plt.show()
+    plt.close()
+
+
+def eval_keypoints_plot(file, image, outputs, eval, orig_keypoints): 
+    """
+    This function plots the regressed (predicted) keypoints and the actual 
+    keypoints after each validation epoch for one image in the batch.
+    'eval' is the method to check the model, whether is the valid data (eval) or test data (test)
+    """
+    # detach the image, keypoints, and output tensors from GPU to CPU
+    #IPython.embed()
+    image = image.detach().cpu()
+    image = image.squeeze(0) ## drop the dimension because no longer need it for model 
+    outputs = outputs #.detach().cpu().numpy()
+    orig_keypoints = orig_keypoints #.detach().cpu().numpy()#orig_keypoints.detach().cpu().numpy()
+    # just get a single datapoint from each batch
+    output_keypoint = outputs[0] 
+    img = np.array(image, dtype='float32')
+    img = np.transpose(img, (1, 2, 0))
+    plt.imshow(img)
+    
+    output_keypoint = output_keypoint.reshape(-1, 2)
+    orig_keypoints = orig_keypoints.reshape(-1, 2)
+    for p in range(output_keypoint.shape[0]):
+        if p == 0: 
+            plt.plot(orig_keypoints[p, 0], orig_keypoints[p, 1], 'b.',  markersize=20)
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.', markersize=20) ## top
+        else:
+            plt.plot(orig_keypoints[p, 0], orig_keypoints[p, 1], 'b.',  markersize=20)
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.', markersize=20) ## bottom
+    plt.savefig(f"{config.OUTPUT_PATH}/{eval}/{eval}_{file}.png")
+    plt.close()
+
+def vis_keypoints(image, keypoints, color=(0,255,0), diameter=15):
+    image = image.copy()
+
+    for (x, y) in keypoints:
+        print(x, y)
+        cv2.circle(image, (int(x), int(y)), diameter, (0, 255, 0), -1)
+
+    plt.imshow(image)
+    plt.show()
+    plt.close()
+
+
+def vis_predicted_keypoints(args, file, image, keypoints, color=(0,255,0), diameter=15):
+    output_keypoint = keypoints.reshape(-1, 2)
+
+    plt.imshow(image)
+    for p in range(output_keypoint.shape[0]):
+        if p == 0: 
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
+        else:
+            plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
+    plt.savefig(f"{args.output_path}/predictions/image_{file}.png")
+    plt.close()
+   
+
+def camres(Camera):    
+    df = pd.read_csv(f'{config.native_res_path}')
+    try: 
+        orig_w = df.loc[df['camID'] == Camera, 'orig_w'].iloc[0]
+        orig_h = df.loc[df['camID'] == Camera, 'orig_h'].iloc[0]
+    except: 
+        print('error')
+    return orig_w, orig_h 
+
+
+def conversionDic(Camera):
+    conversion_table = pd.read_csv(f'{config.snowfreetbl_path}')
+    convDic = dict(zip(conversion_table['camera'], conversion_table['conversion']))
+    conversion = convDic[Camera]
+
+    stake_cm_dic = dict(zip(conversion_table['camera'], conversion_table['snow_free_cm'])) ## snowfree stake
+    snowfreestake_cm = stake_cm_dic[Camera]
+
+    return conversion, snowfreestake_cm
+
+def outputs_in_cm(Camera, filename, x1s_pred, y1s_pred, x2s_pred, y2s_pred):
+    '''
+    This function converts the length in pixels to length in cm for each output
+    '''
+    orig_w, orig_h = camres(Camera)
+    conversion, snowfreestake_cm = conversionDic(Camera)
+
+    keypoints = [x1s_pred, y1s_pred, x2s_pred, y2s_pred]
+    keypoints = np.array(keypoints, dtype='float32')
+    keypoints = keypoints.reshape(-1, 2)
+    keypoints = keypoints * [orig_w / 224, orig_h / 224] 
+    
+    proj_pix_length = math.dist(keypoints[0], keypoints[1])
+    proj_cm_length = proj_pix_length * float(conversion) 
+    snow_depth = snowfreestake_cm - float(proj_cm_length)
+    x1_proj, y1_proj, x2_proj, y2_proj = keypoints[0][0], keypoints[0][1], keypoints[1][0], keypoints[1][1]
+  
+    cmresults = {'Camera':Camera,'filename':filename,'x1_proj':x1_proj,'y1_proj':y1_proj,
+                 'x2_proj':x2_proj,'y2_proj':y2_proj,'proj_pixel_length':proj_pix_length,
+                 'proj_cm_length':proj_cm_length,'snow_depth':snow_depth}
+
+    return cmresults 
+
+
+def datetimeExtrac(filename):
+    datetimeinfo = pd.read_csv(f'{config.datetime_info}')
+    fileDatetime = datetimeinfo.loc[datetimeinfo['filenames'] == filename, 'datetimes'].iloc[0]
+    return fileDatetime 
+
+def diffcm(Camera, filename, automated_snow_depth):
+
+    fileDatetime = datetimeExtrac(filename)
+    actual_snow_depth = pd.read_csv(f'{config.manual_labels_path}') ## add CH and OK poles using conversions
+
+    try: 
+        sd = float(actual_snow_depth[(actual_snow_depth['camera']==Camera) & (actual_snow_depth['dates']==fileDatetime)]['snowDepth'])
+        manual_snowdepth = sd
+        difference = manual_snowdepth - automated_snow_depth
+    except:
+        manual_snowdepth = 'na'
+        difference = 'na'
+
+    return manual_snowdepth, difference
+
+def MAPE(Y_actual,Y_Predicted):
+    mape = ((np.abs(Y_actual - Y_Predicted)/Y_actual)*100)
+    return mape
 
