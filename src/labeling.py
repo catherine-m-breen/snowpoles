@@ -14,7 +14,7 @@ The labels.csv file can then be directly pointed at train.py for fine-tuning. Th
 
 example run 
 
-python src/labeling.py --datapath 'example_nontrained_data' --pole_length '304.8' --subset_to_label '10'
+python src/labeling.py --datapath 'example_nontrained_data' --pole_length '304.8' --subset_to_label '2'
 
 '''
 
@@ -105,7 +105,6 @@ def main():
                         'y2':bottomY, 'PixelLengths':PixelLengths}) 
     
     ## simplified table for snow depth conversion later on
-    IPython.embed()
     metadata = pd.DataFrame({'camera_id':pd.unique(cameraIDs), 'first_pole_length_cm':pole_lengths,
                              'first_pole_length_px':(first_pole_pixel_length), 
                              'conversion':pd.unique(conversions),'width':widths,'height':heights})
