@@ -1,4 +1,4 @@
-'''
+"""
 written by Catherine M. Breen 
 cbreen@uw.edu 
 
@@ -16,10 +16,10 @@ example run
 
 python src/labeling.py --datapath 'nontrained_data' --pole_length '304.8' --subset_to_label '2'
 
-'''
+"""
 
 import cv2
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import glob
 import argparse
 import tqdm
@@ -28,24 +28,29 @@ import pandas as pd
 import os
 import datetime
 import IPython
-import numpy as np 
+import numpy as np
+
 
 def main():
 
     # Argument parser for command-line arguments:
-    parser = argparse.ArgumentParser(description='Label snowpole images')
-    parser.add_argument('--datapath', help='Path to image dir')
-    parser.add_argument('--pole_length', help='Length of pole in cm', default = '100') ### assumes poles are 1 m / 100 cm tall 
-    parser.add_argument('--subset_to_label', help='# of images per camera to label', default = '10')
+    parser = argparse.ArgumentParser(description="Label snowpole images")
+    parser.add_argument("--datapath", help="Path to image dir")
+    parser.add_argument(
+        "--pole_length", help="Length of pole in cm", default="100"
+    )  ### assumes poles are 1 m / 100 cm tall
+    parser.add_argument(
+        "--subset_to_label", help="# of images per camera to label", default="10"
+    )
     args = parser.parse_args()
-        
-    dir = glob.glob(f"{args.datapath}/**/*") #/*") ## path to data directory 
+
+    dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
     dir = sorted(dir)
 
     ## labeling data
     filename = []
     PixelLengths = []
-    topX, topY, bottomX, bottomY = [],[],[],[]
+    topX, topY, bottomX, bottomY = [], [], [], []
     creationTimes = []
 
     ## customized data
@@ -53,64 +58,82 @@ def main():
     subset_to_label = np.int16(args.subset_to_label)
 
     ## some metadata data
-    cameraIDs= []
-    pole_lengths = [] ## tracks pole length
+    cameraIDs = []
+    pole_lengths = []  ## tracks pole length
     first_pole_pixel_length = []
     conversions = []
     widths, heights = [], []
 
     ### loop to label every nth photo!
     i = 0
-    for j, file in tqdm.tqdm(enumerate(dir)): 
-        cameraID = file.split('/')[-2] 
+    for j, file in tqdm.tqdm(enumerate(dir)):
+        cameraID = file.split("/")[-2]
         cameraIDs.append(cameraID)
 
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
-        if i % subset_to_label == 0: 
+        if i % subset_to_label == 0:
             img = cv2.imread(file)
             width, height, channel = img.shape
-            ## assumes the cameras are stored in folder with their camera name 
-            plt.figure(figsize = (20,10))
+            ## assumes the cameras are stored in folder with their camera name
+            plt.figure(figsize=(20, 10))
             plt.imshow(img)
-            plt.title('label top and then bottom', fontweight = "bold")
+            plt.title("label top and then bottom", fontweight="bold")
             top, bottom = plt.ginput(2)
             topX.append(top[0]), topY.append(top[1])
             bottomX.append(bottom[0]), bottomY.append(bottom[1])
             plt.close()
 
-            PixelLength = math.dist(top,bottom)
+            PixelLength = math.dist(top, bottom)
             PixelLengths.append(PixelLength)
-            
+
             ## to get the pixel to centimeter conversion
 
             if i == 0:
                 ## with the first photo, we will get some metadata
-                conversion = pole_length/PixelLength
+                conversion = pole_length / PixelLength
                 ## and get metadata
                 first_pole_pixel_length.append(PixelLength)
                 conversions.append(conversion)
                 pole_lengths.append(pole_length)
                 heights.append(height), widths.append(width)
 
-            else: pass
-            filename.append(file.split('/')[-1])
+            else:
+                pass
+            filename.append(file.split("/")[-1])
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
-        i+=1
+        i += 1
         print(i)
 
-    df = pd.DataFrame({'filename':filename, 'datetime':creationTimes, 'x1':topX,'y1':topY, 'x2':bottomX,
-                        'y2':bottomY, 'PixelLengths':PixelLengths}) 
-    
-    ## simplified table for snow depth conversion later on
-    metadata = pd.DataFrame({'camera_id':pd.unique(cameraIDs), 'pole_length_cm':pole_lengths,
-                             'pole_length_px':(first_pole_pixel_length), 
-                             'pixel_cm_conversion':pd.unique(conversions),'width':widths,'height':heights})
-    
-    df.to_csv(f'{args.datapath}/labels.csv') 
-    metadata.to_csv(f'{args.datapath}/pole_metadata.csv')
+    df = pd.DataFrame(
+        {
+            "filename": filename,
+            "datetime": creationTimes,
+            "x1": topX,
+            "y1": topY,
+            "x2": bottomX,
+            "y2": bottomY,
+            "PixelLengths": PixelLengths,
+        }
+    )
 
-if __name__ == '__main__':
+    ## simplified table for snow depth conversion later on
+    metadata = pd.DataFrame(
+        {
+            "camera_id": pd.unique(cameraIDs),
+            "pole_length_cm": pole_lengths,
+            "pole_length_px": (first_pole_pixel_length),
+            "pixel_cm_conversion": pd.unique(conversions),
+            "width": widths,
+            "height": heights,
+        }
+    )
+
+    df.to_csv(f"{args.datapath}/labels.csv")
+    metadata.to_csv(f"{args.datapath}/pole_metadata.csv")
+
+
+if __name__ == "__main__":
     main()
