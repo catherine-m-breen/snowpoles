@@ -1,0 +1,14 @@
+Pillow
+tqdm
+numpy
+matplotlib
+pandas
+albumentations==1.2.1
+scikit-image>=0.13.1
+scikit-learn>=0.19.1
+IPython==8.4.0
+opencv-python #==4.6.0.66
+scipy
+torchmetrics==0.11.3
+torchvision #==0.13.1
+pretrainedmodels #==0.7.4
