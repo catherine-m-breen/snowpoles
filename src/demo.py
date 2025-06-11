@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 import os
 import IPython
-
+import requests
 
 def download_models():
     """
@@ -36,11 +36,16 @@ def download_models():
 
     # download if does not exist
     if not os.path.exists(f"{save_path}/CO_and_WA_model.pth"):
-        wget_command = f"wget {url} -P {save_path}"
-        os.system(wget_command)
-        return print("\n models download! \n")
+        print("models not present, downloading...")
+        with requests.get(url, stream=True) as download:
+            total_size_mb = 1 + int(int(download.headers.get("Content-Length")) / 1000000)
+            with open(f"{save_path}/CO_and_WA_model.pth", "wb") as outfile:
+                for i, chunk in enumerate(download.iter_content(chunk_size=1000000)):
+                    print(f"\r{i} MB / {total_size_mb} MB", end=" ")
+                    outfile.write(chunk)
+        return print(f"\r{total_size_mb} MB / {total_size_mb} MB\nmodels downloaded")
     else:
-        return print("model already saved")
+        return print("models present")
 
 
 def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
@@ -64,6 +69,7 @@ def load_model(device):
     # pull model from cloud storage
     model_path = "models/CO_and_WA_model.pth"
 
+    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
     checkpoint = torch.load(model_path, map_location=torch.device(device))
 
     # load model weights state_dict
@@ -96,7 +102,7 @@ def predict(model, device):  ##
             image = image / 255.0
 
             # again reshape to add grayscale channel format
-            filename = file.split("/")[-1]
+            filename = file.replace("\\", "/").split("/")[-1]
             Camera = filename.split("_")[0]
 
             ## add an empty dimension for sample size
