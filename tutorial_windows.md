@@ -17,7 +17,7 @@
 
 
 ## Installing VSCodium
-VSCodium is Visual Studio Code, but with the Microsoft spying ripped out.
+Not Microsoft approved!
 
 1. Open up a browser and go to https://github.com/VSCodium/vscodium/releases. Or, if the program you're reading this in supports it, you can click the link to go there.
 2. Under the *x86 64bits* header, click the link under *Windows > User Installer*. It should start with `VSCodiumUserSetup-x64`.
