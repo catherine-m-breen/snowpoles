@@ -59,6 +59,31 @@ def main():
     conversions = []
     widths, heights = [], []
 
+    ## load labels.csv
+    write_headers_line = False
+    try:
+        with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
+            # print("R:", labels2_csv.readline())
+            if not labels2_csv.readline().startswith("\"filename\""):
+                write_headers_line = True
+            else:
+                for line in (labels2_csv):
+                    splitline = line.split(",")
+                    filename.append(splitline[0])
+                    creationTimes.append(splitline[1])
+                    topX.append(splitline[2])
+                    topY.append(splitline[3])
+                    bottomX.append(splitline[4])
+                    bottomY.append(splitline[5])
+                    PixelLengths.append(splitline[6].strip("\n"))
+    except FileNotFoundError:
+        write_headers_line = True
+    if write_headers_line:
+        print("labels2.csv is corrupted or does not exist, creating...")
+        with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv:
+            labels2_csv.write("\"filename\",\"datetime\",\"x1\",\"y1\",\"x2\",\"y2\",\"PixelLengths\"")
+
+    print(PixelLengths)
     ### loop to label every nth photo!
     i = 0
     for j, file in tqdm.tqdm(enumerate(dir)): 
@@ -67,7 +92,8 @@ def main():
 
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
-        if i % subset_to_label == 0: 
+
+        if i % subset_to_label == 0 and (not Path(file).name in filename):
             img = cv2.imread(file)
             width, height, channel = img.shape
             ## assumes the cameras are stored in folder with their camera name 
@@ -81,7 +107,12 @@ def main():
 
             PixelLength = math.dist(top,bottom)
             PixelLengths.append(PixelLength)
-            
+
+            ## save data to labels2.csv
+            nextline = f"\n{Path(file).name},{os.path.getctime(file)},{top[0]},{top[1]},{bottom[0]},{bottom[1]},{PixelLength}"
+            with open(f"{args.datapath}/labels2.csv", "a") as labels2_csv:
+                labels2_csv.write(nextline)
+
             ## to get the pixel to centimeter conversion
 
             if i == 0:
