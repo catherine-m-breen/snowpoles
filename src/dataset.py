@@ -32,6 +32,7 @@ import albumentations as A  ### better for keypoint augmentations, pip install a
 from torchvision.transforms import Compose, Resize, ToTensor
 from sklearn.model_selection import train_test_split
 import os
+from pathlib import Path
 
 
 # Define a function to sample every third photo
@@ -54,8 +55,8 @@ def train_test_split(csv_path, image_path):
     valid_samples = df_data[~df_data.index.isin(training_samples.index)]
 
     ## check to make sure we only use images that exist
-    all_images = glob.glob(image_path + ("/**/*.JPG"))
-    filenames = [item.split("/")[-1] for item in all_images]
+    all_images = list(Path(image_path).rglob("*.JPG"))
+    filenames = [img.name for img in all_images]
     valid_samples = valid_samples[
         valid_samples["filename"].isin(filenames)
     ].reset_index()

@@ -3,10 +3,10 @@ import os
 
 ### THESE PATHS ARE FOR THE DEMO NONTRAINED DATA; PLEASE UPDATE WITH OWN PATHS"
 ### All in snowpoles_data
-ROOT_PATH = "./example_nontrained_data"
+ROOT_PATH = "./nontrained_data"
 OUTPUT_PATH = "./output1"  ## the folder where you want to store your custom model
-metadata = "./example_nontrained_data/pole_metadata.csv"
-labels = "./example_nontrained_data/labels.csv"
+metadata = "./nontrained_data/pole_metadata.csv"
+labels = "./nontrained_data/labels.csv"
 
 # learning parameters
 BATCH_SIZE = 64

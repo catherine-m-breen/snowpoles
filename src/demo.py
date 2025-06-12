@@ -1,6 +1,7 @@
 """
 written by Catherine Breen 
 July 1, 2024
+(updates on June 11 to reflect Windows and Linux operating systems)
 
 load model and run on example images
 export the csv of pixel lengths and snow depths
@@ -22,28 +23,26 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 import os
 import IPython
-import requests
+
+from pathlib import Path
 
 def download_models():
     """
     see the Zenodo page for the latest models
     """
     root = os.getcwd()
-    save_path = f"{root}/models"
+    save_path = f"{root}/models" ## switched this
     if not os.path.exists(save_path):
         os.makedirs(save_path, exist_ok=True)
     url = "https://zenodo.org/records/12764696/files/CO_and_WA_model.pth"
 
-    # download if does not exist
-    if not os.path.exists(f"{save_path}/CO_and_WA_model.pth"):
-        print("models not present, downloading...")
-        with requests.get(url, stream=True) as download:
-            total_size_mb = 1 + int(int(download.headers.get("Content-Length")) / 1000000)
-            with open(f"{save_path}/CO_and_WA_model.pth", "wb") as outfile:
-                for i, chunk in enumerate(download.iter_content(chunk_size=1000000)):
-                    print(f"\r{i} MB / {total_size_mb} MB", end=" ")
-                    outfile.write(chunk)
-        return print(f"\r{total_size_mb} MB / {total_size_mb} MB\nmodels downloaded")
+    if not os.path.exists(f"{save_path}\CO_and_WA_model.pth"):
+        save_path = save_path.replace("\\", "/")
+        output_file = os.path.join(save_path, url.split("/")[-1]).replace("\\", "/")
+        curl_command = f'curl -L --ssl-no-revoke "{url}" -o "{output_file}"'
+        print(curl_command)
+        os.system(curl_command)
+        return print("\n models download! \n")
     else:
         return print("models present")
 
@@ -57,7 +56,7 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], "r.")  ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], "r.")  ## bottom
-    plt.savefig(f"demo_predictions/pred_{file}.png")
+    plt.savefig(os.path.join("demo_predictions", f"pred_{file}.png")) ## windows
     plt.close()
 
 
@@ -88,13 +87,23 @@ def predict(model, device):  ##
     total_length_pixels = []
     snow_depths = []
 
-    snowpolefiles = glob.glob(f"example_data/**/*")
-    ## full length of poles in cm
-    metadata = pd.read_csv(f"example_data/pole_metadata.csv")
+    # snowpolefiles = glob.glob(f"example_data/**/*")
+    # ## full length of poles in cm
+    # metadata = pd.read_csv(f"example_data/pole_metadata.csv")
+    
+    # Define base path
+    base_path = Path("example_data")
+
+    # Get all files recursively
+    snowpolefiles = list(base_path.rglob("*.JPG"))
+
+    # Read metadata
+    metadata = pd.read_csv(base_path / "pole_metadata.csv")
 
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)):
 
+            #IPython.embed()
             image = cv2.imread(file)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             h, w, *_ = image.shape
@@ -102,7 +111,9 @@ def predict(model, device):  ##
             image = image / 255.0
 
             # again reshape to add grayscale channel format
-            filename = file.replace("\\", "/").split("/")[-1]
+            #filename = file.split("/")[-1]
+            #Camera = filename.split("_")[0]
+            filename = Path(file).name  # Extracts "CAM123_image1.jpg"
             Camera = filename.split("_")[0]
 
             ## add an empty dimension for sample size

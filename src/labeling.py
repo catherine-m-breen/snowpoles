@@ -12,9 +12,10 @@ x2,y2 = bottom
 
 The labels.csv file can then be directly pointed at train.py for fine-tuning. The user can then run predict.py to extract the snow depth.
 
-example run 
+example run (double quotes will work on linux or windows)
 
-python src/labeling.py --datapath 'nontrained_data' --pole_length '304.8' --subset_to_label '2'
+python src/labeling.py --datapath "nontrained_data" --pole_length "304.8" --subset_to_label "2"
+python src/labeling.py --datapath "F:\FDLTCC_photos" --pole_length "152.4" --subset_to_label "100"
 
 """
 
@@ -29,6 +30,8 @@ import os
 import datetime
 import IPython
 import numpy as np
+from pathlib import Path
+
 
 
 def main():
@@ -44,7 +47,8 @@ def main():
     )
     args = parser.parse_args()
 
-    dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
+    #dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
+    dir = list(Path(args.datapath).rglob("*.JPG"))  # Recursively lists all files and directories
     dir = sorted(dir)
 
     ## labeling data
@@ -67,7 +71,7 @@ def main():
     ### loop to label every nth photo!
     i = 0
     for j, file in tqdm.tqdm(enumerate(dir)):
-        cameraID = file.split("/")[-2]
+        cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
 
         ##whether to start counter over
@@ -100,7 +104,7 @@ def main():
 
             else:
                 pass
-            filename.append(file.split("/")[-1])
+            filename.append(Path(file).name)
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)

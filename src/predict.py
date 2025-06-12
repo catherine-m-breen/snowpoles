@@ -10,7 +10,7 @@ Snow Depth Extraction From Time‐Lapse Imagery Using a Keypoint Deep Learning M
 Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR036682
 
 Example run:
-python src/predict.py --model_path './output1/model.pth' --img_dir './nontrained_data'  --metadata './nontrained_data/pole_metadata.csv'
+python src/predict.py --model_path "./output1/model.pth" --img_dir "./nontrained_data"  --metadata "./nontrained_data/pole_metadata.csv"
 
 
 """
@@ -30,29 +30,36 @@ from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
-
+from pathlib import Path
 
 def download_models():
     """
     see the Zenodo page for the latest models
     """
     root = os.getcwd()
-    save_path = f"{root}/models"
+    save_path = f"{root}/models" ## switched this
     if not os.path.exists(save_path):
         os.makedirs(save_path, exist_ok=True)
     url = "https://zenodo.org/records/12764696/files/CO_and_WA_model.pth"
 
     # download if does not exist
-    if not os.path.exists(f"{save_path}/CO_and_WA_model.pth"):
-        wget_command = f"wget {url} -P {save_path}"
-        os.system(wget_command)
+    # on windows!! make sure 
+    if not os.path.exists(f"{save_path}\CO_and_WA_model.pth"):
+    
+        ## wget_command = f"wget {url} -P {save_path}" ## this is linux
+        save_path = save_path.replace("\\", "/")
+        output_file = os.path.join(save_path, url.split("/")[-1]).replace("\\", "/")
+        curl_command = f'curl -L --ssl-no-revoke "{url}" -o "{output_file}"'
+        print(curl_command)
+        os.system(curl_command)
         return print("\n models download! \n")
     else:
         return print("model already saved")
 
 
 def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
-    file = file.split(".")[0]
+    #file = file.split(".")[0]
+    file = Path(file).stem  
     output_keypoint = keypoints.reshape(-1, 2)
     plt.imshow(image)
     for p in range(output_keypoint.shape[0]):
@@ -71,6 +78,7 @@ def load_model(args):
         model_path = "models/CO_and_WA_model.pth"
         checkpoint = torch.load(model_path, map_location=torch.device(config.DEVICE))
     else:  ## your customized model
+        IPython.embed()
         checkpoint = torch.load(args.model_path, map_location=torch.device("cpu"))
 
     model.load_state_dict(checkpoint["model_state_dict"])
