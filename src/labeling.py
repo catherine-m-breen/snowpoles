@@ -91,7 +91,6 @@ def main():
         with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv:
             labels2_csv.write("\"filename\",\"datetime\",\"x1\",\"y1\",\"x2\",\"y2\",\"PixelLengths\"")
 
-    print(PixelLengths)
     ### loop to label every nth photo!
     i = 0
     for j, file in tqdm.tqdm(enumerate(dir)):
