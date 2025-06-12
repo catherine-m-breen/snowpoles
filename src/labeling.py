@@ -72,7 +72,6 @@ def main():
     write_headers_line = False
     try:
         with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
-            # print("R:", labels2_csv.readline())
             if not labels2_csv.readline().startswith("\"filename\""):
                 write_headers_line = True
             else:
@@ -102,11 +101,15 @@ def main():
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
 
+        if Path(file).name in filename:
+            print(" ", Path(file).name, "has been labeled before, using stored data.")
+
         if i % subset_to_label == 0 and (not Path(file).name in filename):
+            print(" ", Path(file).name)
             img = cv2.imread(file)
             width, height, channel = img.shape
             ## assumes the cameras are stored in folder with their camera name
-            plt.figure(figsize=(20, 10))
+            plt.figure(figsize=(20, 10), num=Path(file).name)
             plt.imshow(img)
             plt.title("label top and then bottom", fontweight="bold")
             top, bottom = plt.ginput(2)
@@ -140,7 +143,6 @@ def main():
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
         i += 1
-        print(i)
 
     df = pd.DataFrame(
         {
