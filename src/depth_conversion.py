@@ -7,7 +7,7 @@ such as if you have improved metadata, you can run this script by itself on the 
 
 example command line to run:
 
-python src/depth_conversion.py --predictions_path '/predictions/results.csv' --metadata 'example_nontrained_data/pole_metadata.csv'
+python src/depth_conversion.py --predictions_path "./predictions/results.csv" --metadata "./nontrained_data/pole_metadata.csv"
 
 """
 
@@ -17,6 +17,8 @@ import argparse
 import pandas as pd
 from tqdm import tqdm
 from scipy.spatial import distance
+import IPython
+from pathlib import Path
 
 
 def main():
@@ -34,7 +36,8 @@ def main():
         help="Path to pole metadata",
         default="/example_data/pole_metadata.csv",
     )
-    parser.add_argument("")
+    #IPython.embed()
+    ##parser.add_argument("")
     args = parser.parse_args()
 
     predictions = pd.read_csv(f"{args.predictions_path}")
@@ -46,7 +49,7 @@ def main():
 
     for filename in predictions["filename"]:
         try:
-            camera = filename.split("/")[-1]
+            camera = Path(filename).name
 
             full_length_pole_cm = metadata.loc[
                 metadata["camera_id"] == camera, "pole_length_cm"
@@ -76,7 +79,9 @@ def main():
     df = pd.DataFrame(
         {"camera_id": cameras, "filename": files, "snowdepth": snow_depths}
     )
-    df.to_csv(f"{args.predictions_path}/results_wsnowdepthcm.csv")
+    root_folder = Path(args.predictions_path).parent
+    output_path = Path(root_folder / "results_wsnowdepthcm.csv")
+    df.to_csv(output_path)
 
 
 if __name__ == "__main__":
