@@ -59,7 +59,7 @@ def main():
     conversions = []
     widths, heights = [], []
 
-    ## load labels.csv
+    ## load labels2.csv
     write_headers_line = False
     try:
         with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
