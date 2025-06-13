@@ -13,14 +13,15 @@ Add this repository as a remote:
 git remote add Nesitive https://github.com/Nesitive/snowpoles
 ```
 
+Create a branch for the changes and switch to it:
+```
+git branch Nesitive
+git checkout Nesitive
+```
+
 Pull in the changes:
 ```
-git pull Nesitive
+git pull Nesitive main
 ```
 
-Switch to the enhanced branch:
-```
-git checkout Nesitive-Enhancements
-```
-
-Just like that! Enjoy your smooth experience.
+Just like that! Enjoy your improved experience.
