@@ -69,16 +69,16 @@ def main():
     conversions = []
     widths, heights = [], []
 
-    ## load labels2.csv
+    ## load labels.csv
     write_headers_line = False
     try:
-        with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
+        with open(f"{args.datapath}/labels.csv", "r") as labels2_csv:
             lines = labels2_csv.readlines()
-            with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv_write:
+            with open(f"{args.datapath}/labels.csv", "w") as labels2_csv_write:
                 for line in lines:
                     if (line != "\n"):
                         labels2_csv_write.write(line)
-        with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
+        with open(f"{args.datapath}/labels.csv", "r") as labels2_csv:
             if not labels2_csv.readline().startswith('"filename"'):
                 write_headers_line = True
             else:
@@ -94,8 +94,8 @@ def main():
     except FileNotFoundError:
         write_headers_line = True
     if write_headers_line:
-        print("labels2.csv is corrupted or does not exist, creating...")
-        with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv:
+        print("labels.csv is corrupted or does not exist, creating...")
+        with open(f"{args.datapath}/labels.csv", "w") as labels2_csv:
             labels2_csv.write(
                 '"filename","datetime","x1","y1","x2","y2","PixelLengths"'
             )
@@ -128,9 +128,9 @@ def main():
             PixelLength = math.dist(top, bottom)
             PixelLengths.append(PixelLength)
 
-            ## save data to labels2.csv
+            ## save data to labels.csv
             nextline = f"\n{Path(file).name},{os.path.getctime(file)},{top[0]},{top[1]},{bottom[0]},{bottom[1]},{PixelLength}"
-            with open(f"{args.datapath}/labels2.csv", "a") as labels2_csv:
+            with open(f"{args.datapath}/labels.csv", "a") as labels2_csv:
                 labels2_csv.write(nextline)
 
             ## to get the pixel to centimeter conversion
@@ -152,18 +152,6 @@ def main():
             creationTimes.append(dt_c)
         i += 1
 
-    df = pd.DataFrame(
-        {
-            "filename": filename,
-            "datetime": creationTimes,
-            "x1": topX,
-            "y1": topY,
-            "x2": bottomX,
-            "y2": bottomY,
-            "PixelLengths": PixelLengths,
-        }
-    )
-
     ## simplified table for snow depth conversion later on
     metadata = pd.DataFrame(
         {
@@ -176,7 +164,6 @@ def main():
         }
     )
 
-    df.to_csv(f"{args.datapath}/labels.csv")
     metadata.to_csv(f"{args.datapath}/pole_metadata.csv")
 
 
