@@ -28,7 +28,9 @@ import pandas as pd
 import os
 import datetime
 import IPython
-import numpy as np 
+import numpy as np
+from pathlib import Path
+
 
 def main():
 
@@ -38,8 +40,11 @@ def main():
     parser.add_argument('--pole_length', help='Length of pole in cm', default = '100') ### assumes poles are 1 m / 100 cm tall 
     parser.add_argument('--subset_to_label', help='# of images per camera to label', default = '10')
     args = parser.parse_args()
-        
-    dir = glob.glob(f"{args.datapath}/**/*") #/*") ## path to data directory 
+
+    # dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
+    dir = list(
+        Path(args.datapath).rglob("*.JPG")
+    )  # Recursively lists all files and directories
     dir = sorted(dir)
 
     ## labeling data
@@ -63,10 +68,16 @@ def main():
     write_headers_line = False
     try:
         with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
-            if not labels2_csv.readline().startswith("\"filename\""):
+            lines = labels2_csv.readlines()
+            with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv_write:
+                for line in lines:
+                    if (line != "\n"):
+                        labels2_csv_write.write(line)
+        with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
+            if not labels2_csv.readline().startswith('"filename"'):
                 write_headers_line = True
             else:
-                for line in (labels2_csv):
+                for line in labels2_csv:
                     splitline = line.split(",")
                     filename.append(splitline[0])
                     creationTimes.append(splitline[1])
@@ -80,7 +91,9 @@ def main():
     if write_headers_line:
         print("labels2.csv is corrupted or does not exist, creating...")
         with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv:
-            labels2_csv.write("\"filename\",\"datetime\",\"x1\",\"y1\",\"x2\",\"y2\",\"PixelLengths\"")
+            labels2_csv.write(
+                '"filename","datetime","x1","y1","x2","y2","PixelLengths"'
+            )
 
     ### loop to label every nth photo!
     i = 0
