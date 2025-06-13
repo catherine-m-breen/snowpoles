@@ -32,6 +32,9 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 from pathlib import Path
 
+# Comment out this line to disable dark mode
+plt.style.use("./themes/dark.mplstyle")
+
 def download_models():
     """
     see the Zenodo page for the latest models

@@ -11,6 +11,8 @@ import PIL
 from PIL import Image
 from PIL import ExifTags
 
+# Comment out this line to disable dark mode
+plt.style.use("./themes/dark.mplstyle")
 
 def valid_keypoints_plot(image, outputs, orig_keypoints, epoch):
     """

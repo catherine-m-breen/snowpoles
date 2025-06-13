@@ -34,6 +34,8 @@ from sklearn.model_selection import train_test_split
 import os
 from pathlib import Path
 
+# Comment out this line to disable dark mode
+plt.style.use("./themes/dark.mplstyle")
 
 # Define a function to sample every third photo
 ## Only used for experiments
