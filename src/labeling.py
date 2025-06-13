@@ -32,6 +32,8 @@ import IPython
 import numpy as np
 from pathlib import Path
 
+# Comment out this line to disable dark mode
+plt.style.use("./themes/dark.mplstyle")
 
 def main():
 
@@ -132,7 +134,7 @@ def main():
             img = cv2.imread(file)
             width, height, channel = img.shape
             ## assumes the cameras are stored in folder with their camera name
-            plt.figure(figsize=(20, 10), num=Path(file).name)
+            figure = plt.figure(figsize=(20, 10), num=Path(file).name)
             plt.imshow(img)
             plt.title("label top and then bottom", fontweight="bold")
             top, bottom = plt.ginput(2)
