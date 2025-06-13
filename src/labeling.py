@@ -33,7 +33,6 @@ import numpy as np
 from pathlib import Path
 
 
-
 def main():
 
     # Argument parser for command-line arguments:
@@ -47,8 +46,10 @@ def main():
     )
     args = parser.parse_args()
 
-    #dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
-    dir = list(Path(args.datapath).rglob("*.JPG"))  # Recursively lists all files and directories
+    # dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
+    dir = list(
+        Path(args.datapath).rglob("*.JPG")
+    )  # Recursively lists all files and directories
     dir = sorted(dir)
 
     ## labeling data
@@ -72,10 +73,16 @@ def main():
     write_headers_line = False
     try:
         with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
-            if not labels2_csv.readline().startswith("\"filename\""):
+            lines = labels2_csv.readlines()
+            with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv_write:
+                for line in lines:
+                    if (line != "\n"):
+                        labels2_csv_write.write(line)
+        with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
+            if not labels2_csv.readline().startswith('"filename"'):
                 write_headers_line = True
             else:
-                for line in (labels2_csv):
+                for line in labels2_csv:
                     splitline = line.split(",")
                     filename.append(splitline[0])
                     creationTimes.append(splitline[1])
@@ -89,7 +96,9 @@ def main():
     if write_headers_line:
         print("labels2.csv is corrupted or does not exist, creating...")
         with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv:
-            labels2_csv.write("\"filename\",\"datetime\",\"x1\",\"y1\",\"x2\",\"y2\",\"PixelLengths\"")
+            labels2_csv.write(
+                '"filename","datetime","x1","y1","x2","y2","PixelLengths"'
+            )
 
     ### loop to label every nth photo!
     i = 0
