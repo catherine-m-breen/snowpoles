@@ -102,9 +102,25 @@ def main():
 
     ### loop to label every nth photo!
     i = 0
+    prev_cameraID = ""
     for j, file in tqdm.tqdm(enumerate(dir)):
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
+
+        if not len(prev_cameraID) or cameraID != prev_cameraID:
+            prev_cameraID = cameraID
+            mj = int(j / subset_to_label)
+            print(mj, len(topX))
+            PixelLength = math.dist((float(topX[mj]), float(topY[mj])), (float(bottomX[mj]), float(bottomY[mj])))
+            ## with the first photo, we will get some metadata
+            conversion = pole_length / PixelLength
+            ## and get metadata
+            first_pole_pixel_length.append(PixelLength)
+            conversions.append(conversion)
+            pole_lengths.append(pole_length)
+            img = cv2.imread(file)
+            width, height, channel = img.shape
+            heights.append(height), widths.append(width)
 
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
