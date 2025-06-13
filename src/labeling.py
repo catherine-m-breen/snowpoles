@@ -105,7 +105,6 @@ def main():
         if not len(prev_cameraID) or cameraID != prev_cameraID:
             prev_cameraID = cameraID
             mj = int(j / subset_to_label)
-            print(mj, len(topX))
             PixelLength = math.dist((float(topX[mj]), float(topY[mj])), (float(bottomX[mj]), float(bottomY[mj])))
             ## with the first photo, we will get some metadata
             conversion = pole_length / PixelLength
@@ -144,19 +143,7 @@ def main():
             with open(f"{args.datapath}/labels.csv", "a") as labels2_csv:
                 labels2_csv.write(nextline)
 
-            ## to get the pixel to centimeter conversion
-
-            if i == 0:
-                ## with the first photo, we will get some metadata
-                conversion = pole_length/PixelLength
-                ## and get metadata
-                first_pole_pixel_length.append(PixelLength)
-                conversions.append(conversion)
-                pole_lengths.append(pole_length)
-                heights.append(height), widths.append(width)
-
-            else: pass
-            filename.append(file.split('/')[-1])
+            filename.append(Path(file).name)
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
