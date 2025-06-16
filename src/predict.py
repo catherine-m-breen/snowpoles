@@ -31,7 +31,6 @@ import os
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
 from pathlib import Path
-from download_models import download_models
 
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
