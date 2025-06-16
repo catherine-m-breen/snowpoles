@@ -37,6 +37,7 @@ from pathlib import Path
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
+
 # Define a function to sample every third photo
 ## Only used for experiments
 def sample_every_x(group, x):
@@ -58,6 +59,10 @@ def train_test_split(csv_path, image_path):
 
     ## check to make sure we only use images that exist
     all_images = list(Path(image_path).rglob("*.JPG"))
+    global parents
+    parents = {}
+    for i in all_images:
+        parents[str(i).split("/")[-1]] = str(i)
     filenames = [img.name for img in all_images]
     valid_samples = valid_samples[
         valid_samples["filename"].isin(filenames)
@@ -132,12 +137,10 @@ class snowPoleDataset(Dataset):
     def __getitem__(self, index):
         cameraID = self.data.iloc[index]["filename"].split("_")[
             0
-        ]  ## may need to update this.
+        ]  ## may need to update this. *Yeah, you think?* -Nesitive
         filename = self.data.iloc[index]["filename"]
 
-        image = cv2.imread(
-            f"{self.path}/{cameraID}/{self.data.iloc[index]['filename']}"
-        )
+        image = cv2.imread(parents[self.data.iloc[index]["filename"]])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         orig_h, orig_w, channel = image.shape
 
