@@ -33,6 +33,8 @@ from pathlib import Path
 matplotlib.style.use("ggplot")
 # start_time = time.time()
 
+# Comment out this line to disable dark mode
+plt.style.use("./themes/dark.mplstyle")
 
 def download_models():
     """

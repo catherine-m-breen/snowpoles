@@ -23,8 +23,10 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 import os
 import IPython
-
 from pathlib import Path
+
+# Comment out this line to disable dark mode
+plt.style.use("./themes/dark.mplstyle")
 
 def download_models():
     """
@@ -195,6 +197,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     download_models()
 
+    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
     model = load_model(device)
 
     ## returns a set of images of outputs
