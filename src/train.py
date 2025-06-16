@@ -47,6 +47,7 @@ download_models()
 
 if config.FINETUNE == True:
     model_path = "models/CO_and_WA_model.pth"
+    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
     checkpoint = torch.load(model_path, map_location=torch.device(config.DEVICE))
     model.load_state_dict(checkpoint["model_state_dict"])
     print("fine-tuned model loaded...")
