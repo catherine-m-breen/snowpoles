@@ -33,7 +33,6 @@ import numpy as np
 from pathlib import Path
 
 
-
 def main():
 
     # Argument parser for command-line arguments:
@@ -47,8 +46,10 @@ def main():
     )
     args = parser.parse_args()
 
-    #dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
-    dir = list(Path(args.datapath).rglob("*.JPG"))  # Recursively lists all files and directories
+    # dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
+    dir = list(
+        Path(args.datapath).rglob("*.JPG")
+    )  # Recursively lists all files and directories
     dir = sorted(dir)
 
     ## labeling data
@@ -71,11 +72,17 @@ def main():
     ## load labels.csv
     write_headers_line = False
     try:
-        with open(f"{args.datapath}/labels2.csv", "r") as labels2_csv:
-            if not labels2_csv.readline().startswith("\"filename\""):
+        with open(f"{args.datapath}/labels.csv", "r") as labels2_csv:
+            lines = labels2_csv.readlines()
+            with open(f"{args.datapath}/labels.csv", "w") as labels2_csv_write:
+                for line in lines:
+                    if (line != "\n"):
+                        labels2_csv_write.write(line)
+        with open(f"{args.datapath}/labels.csv", "r") as labels2_csv:
+            if not labels2_csv.readline().startswith('"filename"'):
                 write_headers_line = True
             else:
-                for line in (labels2_csv):
+                for line in labels2_csv:
                     splitline = line.split(",")
                     filename.append(splitline[0])
                     creationTimes.append(splitline[1])
@@ -87,16 +94,32 @@ def main():
     except FileNotFoundError:
         write_headers_line = True
     if write_headers_line:
-        print("labels2.csv is corrupted or does not exist, creating...")
-        with open(f"{args.datapath}/labels2.csv", "w") as labels2_csv:
-            labels2_csv.write("\"filename\",\"datetime\",\"x1\",\"y1\",\"x2\",\"y2\",\"PixelLengths\"")
+        print("labels.csv is corrupted or does not exist, creating...")
+        with open(f"{args.datapath}/labels.csv", "w") as labels2_csv:
+            labels2_csv.write(
+                '"filename","datetime","x1","y1","x2","y2","PixelLengths"'
+            )
 
-    print(PixelLengths)
     ### loop to label every nth photo!
     i = 0
+    prev_cameraID = ""
     for j, file in tqdm.tqdm(enumerate(dir)):
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
+
+        if not len(prev_cameraID) or cameraID != prev_cameraID:
+            prev_cameraID = cameraID
+            mj = int(j / subset_to_label)
+            PixelLength = math.dist((float(topX[mj]), float(topY[mj])), (float(bottomX[mj]), float(bottomY[mj])))
+            ## with the first photo, we will get some metadata
+            conversion = pole_length / PixelLength
+            ## and get metadata
+            first_pole_pixel_length.append(PixelLength)
+            conversions.append(conversion)
+            pole_lengths.append(pole_length)
+            img = cv2.imread(file)
+            width, height, channel = img.shape
+            heights.append(height), widths.append(width)
 
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
@@ -120,41 +143,16 @@ def main():
             PixelLength = math.dist(top, bottom)
             PixelLengths.append(PixelLength)
 
-            ## save data to labels2.csv
+            ## save data to labels.csv
             nextline = f"\n{Path(file).name},{os.path.getctime(file)},{top[0]},{top[1]},{bottom[0]},{bottom[1]},{PixelLength}"
-            with open(f"{args.datapath}/labels2.csv", "a") as labels2_csv:
+            with open(f"{args.datapath}/labels.csv", "a") as labels2_csv:
                 labels2_csv.write(nextline)
 
-            ## to get the pixel to centimeter conversion
-
-            if i == 0:
-                ## with the first photo, we will get some metadata
-                conversion = pole_length / PixelLength
-                ## and get metadata
-                first_pole_pixel_length.append(PixelLength)
-                conversions.append(conversion)
-                pole_lengths.append(pole_length)
-                heights.append(height), widths.append(width)
-
-            else:
-                pass
             filename.append(Path(file).name)
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
         i += 1
-
-    df = pd.DataFrame(
-        {
-            "filename": filename,
-            "datetime": creationTimes,
-            "x1": topX,
-            "y1": topY,
-            "x2": bottomX,
-            "y2": bottomY,
-            "PixelLengths": PixelLengths,
-        }
-    )
 
     ## simplified table for snow depth conversion later on
     metadata = pd.DataFrame(
@@ -168,7 +166,6 @@ def main():
         }
     )
 
-    df.to_csv(f"{args.datapath}/labels.csv")
     metadata.to_csv(f"{args.datapath}/pole_metadata.csv")
 
 
