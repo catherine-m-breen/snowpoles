@@ -31,11 +31,13 @@ import albumentations as A  ### better for keypoint augmentations, pip install a
 from torchvision.transforms import Compose, Resize, ToTensor
 from sklearn.model_selection import train_test_split
 import os
+from pathlib import Path
 
 
 # Load config from config.toml
 with open("config.toml", "rb") as configfile:
     config = tomllib.load(configfile)
+
 
 
 # Define a function to sample every third photo
@@ -58,8 +60,12 @@ def train_test_split(csv_path, image_path):
     valid_samples = df_data[~df_data.index.isin(training_samples.index)]
 
     ## check to make sure we only use images that exist
-    all_images = glob.glob(image_path + ("/**/*.JPG"))
-    filenames = [item.split("/")[-1] for item in all_images]
+    all_images = list(Path(image_path).rglob("*.JPG"))
+    global parents
+    parents = {}
+    for i in all_images:
+        parents[str(i).split("/")[-1]] = str(i)
+    filenames = [img.name for img in all_images]
     valid_samples = valid_samples[
         valid_samples["filename"].isin(filenames)
     ].reset_index()
@@ -133,12 +139,10 @@ class snowPoleDataset(Dataset):
     def __getitem__(self, index):
         cameraID = self.data.iloc[index]["filename"].split("_")[
             0
-        ]  ## may need to update this.
+        ]  ## may need to update this. *Yeah, you think?* -Nesitive
         filename = self.data.iloc[index]["filename"]
 
-        image = cv2.imread(
-            f"{self.path}/{cameraID}/{self.data.iloc[index]['filename']}"
-        )
+        image = cv2.imread(parents[self.data.iloc[index]["filename"]])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         orig_h, orig_w, channel = image.shape
 
