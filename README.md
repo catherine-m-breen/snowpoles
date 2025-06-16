@@ -4,9 +4,11 @@ This repository is forked from ![catherine-m-breen/snowpoles](https://github.com
 This fork has all of my improvements that haven't been merged into the official repository, including:
 
  - A tutorial for getting everything you need to work with this repository set up on Windows (see tutorial_windows.md)
- - Progress-saving while labeling images with labeling.py, so you can pick up where you left off and not have to relabel hundreds of images
- - Dark mode
  - No Miniconda/Anaconda needed. Ever.
+ - Dark mode
+ - Progress-saving while labeling images with labeling.py, so you can pick up where you left off and not have to relabel hundreds of images
+ - Using the images' unique filenames to adapt across directory structures
+ - Full support of Python 3.13.3
 
 
 # Switching from the official repository
