@@ -22,7 +22,6 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
 import os
-import IPython
 from pathlib import Path
 from model_download import download_models
 
@@ -85,7 +84,6 @@ def predict(model, device):  ##
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)):
 
-            #IPython.embed()
             image = cv2.imread(file)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             h, w, *_ = image.shape

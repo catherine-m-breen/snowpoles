@@ -1,11 +1,6 @@
-"""
-This script will download the folder with the model to a folder called "model". 
-We will use the wget command to download the zip folder. 
-"""
-
 import os
-from pathlib import Path
 
+# Download model to models/ directory
 def download_models():
     """
     see the Zenodo page for the latest models
