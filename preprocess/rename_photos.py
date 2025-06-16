@@ -9,10 +9,8 @@ python preprocess/rename_photos.py --path "./nontrained_data"
 
 
 import glob
-import os 
 import tqdm
 import argparse
-import IPython
 from pathlib import Path
 
 def main():
