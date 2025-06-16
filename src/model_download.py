@@ -30,4 +30,5 @@ def download_models():
     else:
         return print("model already saved")
 
-download_models()
+if __name__ == "__main__":
+    download_models()
