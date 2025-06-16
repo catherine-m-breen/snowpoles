@@ -31,6 +31,7 @@ import os
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
 from pathlib import Path
+import config
 
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
@@ -52,11 +53,11 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=
 def load_model(args):
     model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
     # load the model checkpoint
-    if args.model_path == "models/CO_and_WA_model.pth":  ## uses model from paper
-        model_path = "models/CO_and_WA_model.pth"
+    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
+    if args.model_path == config.FT_PATH:  ## uses model from paper
+        model_path = config.FT_PATH
         checkpoint = torch.load(model_path, map_location=torch.device(config.DEVICE))
     else:  ## your customized model
-        IPython.embed()
         checkpoint = torch.load(args.model_path, map_location=torch.device("cpu"))
 
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -187,7 +188,7 @@ def main():
         "--model_path",
         required=False,
         help="Path to model",
-        default="models/CO_and_WA_model.pth",
+        default=config.FT_PATH,
     )
     parser.add_argument(
         "--img_dir",
