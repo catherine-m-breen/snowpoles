@@ -29,7 +29,7 @@ import IPython
 import os
 import numpy as np
 from pathlib import Path
-from download_models import download_models
+from model_download import download_models
 
 matplotlib.style.use("ggplot")
 # start_time = time.time()
