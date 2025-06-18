@@ -8,7 +8,7 @@ This fork has all of my improvements that haven't been merged into the official 
  - Dark mode
  - Progress-saving while labeling images with labeling.py, so you can pick up where you left off and not have to relabel hundreds of images
  - Using the images' unique filenames to adapt across directory structures
- - Full support of Python 3.13.3
+ - Full support of Python 3.13.3 and the newest versions of every library
 
 
 # Switching from the official repository
