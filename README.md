@@ -33,6 +33,10 @@ Create your config file:
 ```
 cp config-example.toml config.toml
 ```
-Look inside your newly created config file and change the paths to point to where you keep things.
+
+Run the graphical configurator, which lets you pick file paths to use using your system's file dialog:
+```
+python configurator.py
+```
 
 Just like that! Enjoy your improved experience.
