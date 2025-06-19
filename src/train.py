@@ -14,22 +14,101 @@ python src/train.py
 
 """
 
-# import time
+# Import startup libraries
+import argparse
+import tomllib
+import os
+
+# Argument parser
+parser = argparse.ArgumentParser(description="Train a model on a set of images")
+parser.add_argument(
+    "--model",
+    required=False,
+    help='model to train, default is "models/CO_and_WA_model.pth"',
+)
+parser.add_argument("--path", help="directory where images are located")
+parser.add_argument(
+    "--device", required=False, help='device to use for training ("cpu" or "cuda")'
+)
+parser.add_argument(
+    "--output", required=False, help="directory in which to store trained models"
+)
+parser.add_argument(
+    "--epochs", required=False, help="epochs"
+)
+parser.add_argument(
+    "--lr", required=False, help="please let us know what this setting does; we've been afraid to try it"
+)
+parser.add_argument(
+    "--no_confirm", required=False, help="skip confirmation", action="store_true"
+)
+args = parser.parse_args()
+
+# Get arguments from config file if they weren't specified
+with open("config.toml", "rb") as configfile:
+    config = tomllib.load(configfile)
+if not args.model:
+    args.model = config["paths"]["trainee_model"]
+if not args.path:
+    args.path = config["paths"]["input_images"]
+if not args.device:
+    args.device = config["training"]["device"]
+if not args.output:
+    args.output = config["paths"]["models_output"]
+if not args.epochs:
+    args.epochs = config["training"]["epochs"]
+if not args.lr:
+    args.lr = config["training"]["lr"]
+
+# Confirmation
+if not args.no_confirm:
+    print(
+        "\n\n# The following options were specified in config.toml or as arguments:\n"
+    )
+    print("Model to train:\n" + os.getcwd() + "/" + str(args.model) + "\n")
+    print(
+        "Directory where images are located:\n"
+        + os.getcwd()
+        + "/"
+        + str(args.path)
+        + "\n"
+    )
+    print("Device to use:\n" + args.device + "\n")
+    print(
+        "Directory where generated models will be stored:\n"
+        + os.getcwd()
+        + "/"
+        + str(args.output)
+        + "\n"
+    )
+    print("LR:\n" + str(args.lr) + "\n")
+    print("Epochs:\n" + str(args.epochs) + "\n")
+    confirmation = str(input("\nIs this OK? (y/n) "))
+    if confirmation.lower() != "y":
+        if confirmation.lower() == "n":
+            print(
+                "\nEdit the config file, located at",
+                os.getcwd()
+                + "/config.toml, to your liking, and then re-run this file.\n",
+            )
+        else:
+            print("Invalid input.\n")
+        quit()
+
+# Import all libraries
 import torch
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import matplotlib
-import config
 import utils
 from model import snowPoleResNet50
-from dataset import train_data, train_loader, valid_data, valid_loader
 from tqdm import tqdm
 import IPython
-import os
 import numpy as np
 from pathlib import Path
 from model_download import download_models
+from dataset import train_data, train_loader, valid_data, valid_loader
 
 matplotlib.style.use("ggplot")
 # start_time = time.time()
@@ -37,33 +116,28 @@ matplotlib.style.use("ggplot")
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
+
 ## create output path
-if not os.path.exists(f"{config.OUTPUT_PATH}"):
-    os.makedirs(f"{config.OUTPUT_PATH}", exist_ok=True)
+if not os.path.exists(f"{args.output}"):
+    os.makedirs(f"{args.output}", exist_ok=True)
 
 # model
-model = snowPoleResNet50(pretrained=True, requires_grad=True).to(config.DEVICE)
-download_models()
+model = snowPoleResNet50(pretrained=True, requires_grad=True).to(args.device)
 
-if config.FINETUNE == True:
-    model_path = "models/CO_and_WA_model.pth"
-    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
-    checkpoint = torch.load(model_path, map_location=torch.device(config.DEVICE))
-    model.load_state_dict(checkpoint["model_state_dict"])
-    print("fine-tuned model loaded...")
-
-else:
-    print("this run is not using the pre-trained model!")
+torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
+checkpoint = torch.load(args.model, map_location=torch.device(args.device))
+model.load_state_dict(checkpoint["model_state_dict"])
+print("fine-tuned model loaded...")
 
 # optimizer
-optimizer = optim.Adam(model.parameters(), lr=config.LR)
+optimizer = optim.Adam(model.parameters(), lr=args.lr)
 criterion = nn.SmoothL1Loss()
 
 
 # training function
 def fit(model, dataloader, data):
     print("Training")
-    model.to(config.DEVICE)  ##
+    model.to(args.device)  ##
     model.train()
     train_running_loss = 0.0
     counter = 0
@@ -71,8 +145,8 @@ def fit(model, dataloader, data):
     num_batches = int(len(data) / dataloader.batch_size)
     for i, data in tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
-        image, keypoints = data["image"].to(config.DEVICE), data["keypoints"].to(
-            config.DEVICE
+        image, keypoints = data["image"].to(args.device), data["keypoints"].to(
+            args.device
         )
         # flatten the keypoints
         keypoints = keypoints.view(keypoints.size(0), -1)
@@ -90,7 +164,7 @@ def fit(model, dataloader, data):
 # validation function
 def validate(model, dataloader, data, epoch):
     print("Validating")
-    model.to(config.DEVICE)
+    model.to(args.device)
     model.eval()
     valid_running_loss = 0.0
     counter = 0
@@ -99,8 +173,8 @@ def validate(model, dataloader, data, epoch):
     with torch.no_grad():
         for i, data in tqdm(enumerate(dataloader), total=num_batches):
             counter += 1
-            image, keypoints = data["image"].to(config.DEVICE), data["keypoints"].to(
-                config.DEVICE
+            image, keypoints = data["image"].to(args.device), data["keypoints"].to(
+                args.device
             )
             # flatten the keypoints
             keypoints = keypoints.view(keypoints.size(0), -1)
@@ -111,8 +185,8 @@ def validate(model, dataloader, data, epoch):
             valid_running_loss += loss.item()
             # plot the predicted validation keypoints after every...
             # ... predefined number of epochs
-            if not os.path.exists(config.OUTPUT_PATH):
-                os.makedirs(config.OUTPUT_PATH, exist_ok=True)
+            if not os.path.exists(args.output):
+                os.makedirs(args.output, exist_ok=True)
             if (
                 epoch + 1
             ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
@@ -129,9 +203,9 @@ val_loss = []
 best_loss_val = np.inf
 best_loss_val_epoch = 0
 #######################
-for epoch in range(config.EPOCHS):
+for epoch in range(args.epochs):
 
-    print(f"Epoch {epoch+1} of {config.EPOCHS}")
+    print(f"Epoch {epoch+1} of {args.epochs}")
     train_epoch_loss = fit(model, train_loader, train_data)
     val_epoch_loss = validate(model, valid_loader, valid_data, epoch)
     train_loss.append(train_epoch_loss)
@@ -142,12 +216,12 @@ for epoch in range(config.EPOCHS):
     if (epoch % 50) == 0:
         torch.save(
             {
-                "epoch": config.EPOCHS,
+                "epoch": args.epochs,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "loss": criterion,
             },
-            f"{config.OUTPUT_PATH}/model_epoch{epoch}.pth",
+            f"{args.output}/model_epoch{epoch}.pth",
         )
 
     ####### early stopping #########
@@ -164,16 +238,16 @@ plt.plot(val_loss, color="red", label="validataion loss")
 plt.xlabel("Epochs")
 plt.ylabel("Loss")
 plt.legend()
-plt.savefig(f"{config.OUTPUT_PATH}/loss.png")
+plt.savefig(f"{args.output}/loss.png")
 plt.close()  # changed from plt.show()
 torch.save(
     {
-        "epoch": config.EPOCHS,
+        "epoch": args.epochs,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "loss": criterion,
     },
-    f"{config.OUTPUT_PATH}/model.pth",
+    f"{args.output}/model.pth",
 )  ### the last model
 print("DONE TRAINING")
 # print("My program took", time.time() - start_time, "to run")

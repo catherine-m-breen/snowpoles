@@ -4,9 +4,12 @@ This repository is forked from ![catherine-m-breen/snowpoles](https://github.com
 This fork has all of my improvements that haven't been merged into the official repository, including:
 
  - A tutorial for getting everything you need to work with this repository set up on Windows (see tutorial_windows.md)
- - Progress-saving while labeling images with labeling.py, so you can pick up where you left off and not have to relabel hundreds of images
- - Dark mode
  - No Miniconda/Anaconda needed. Ever.
+ - Universal config file, so you can "set it and forget it" and not have to include flags every time you run a command
+ - Dark mode
+ - Progress-saving while labeling images with labeling.py, so you can pick up where you left off and not have to relabel hundreds of images
+ - Using the images' unique filenames to adapt across directory structures
+ - Full support of Python 3.13.3 and the newest versions of every library
 
 
 # Switching from the official repository
@@ -25,5 +28,11 @@ Pull in the changes:
 ```
 git pull Nesitive main
 ```
+
+Create your config file:
+```
+cp config-example.toml config.toml
+```
+Look inside your newly created config file and change the paths to point to where you keep things.
 
 Just like that! Enjoy your improved experience.

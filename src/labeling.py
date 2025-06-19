@@ -14,8 +14,7 @@ The labels.csv file can then be directly pointed at train.py for fine-tuning. Th
 
 example run (double quotes will work on linux or windows)
 
-python src/labeling.py --datapath "nontrained_data" --pole_length "304.8" --subset_to_label "2"
-python src/labeling.py --datapath "F:\FDLTCC_photos" --pole_length "152.4" --subset_to_label "100"
+python src/labeling.py --datapath "/path/to/nontrained/data" --pole_length "304.8" --subset_to_label "2"
 
 """
 
@@ -30,26 +29,71 @@ import os
 import datetime
 import numpy as np
 from pathlib import Path
+import tomllib
 
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
+
 def main():
 
     # Argument parser for command-line arguments:
-    parser = argparse.ArgumentParser(description="Label snowpole images")
-    parser.add_argument("--datapath", help="Path to image dir")
+    parser = argparse.ArgumentParser(description="Manually label images for training")
+    parser.add_argument("--path", help="directory where images are located")
     parser.add_argument(
-        "--pole_length", help="Length of pole in cm", default="100"
-    )  ### assumes poles are 1 m / 100 cm tall
+        "--datapath", help="(deprecated) directory where images are located"
+    )
     parser.add_argument(
-        "--subset_to_label", help="# of images per camera to label", default="10"
+        "--pole_length", help="length of pole in cm, default 100", default="100"
+    )
+    parser.add_argument(
+        "--subset_to_label", help="label every N images, default 10", default="10"
+    )
+    parser.add_argument(
+        "--no_confirm", required=False, help="skip confirmation", action="store_true"
     )
     args = parser.parse_args()
+    args.path = args.datapath
 
-    # dir = glob.glob(f"{args.datapath}/**/*")  # /*") ## path to data directory
+    # Get arguments from config file if they weren't specified
+    with open("config.toml", "rb") as configfile:
+        config = tomllib.load(configfile)
+    if not args.path:
+        args.path = config["paths"]["input_images"]
+    if not args.pole_length:
+        args.pole_length = config["labeling"]["pole_length"]
+    if not args.subset_to_label:
+        args.subset_to_label = config["labeling"]["subset_to_label"]
+
+    # Confirmation
+    if not args.no_confirm:
+        print(
+            "\n\n# The following options were specified in config.toml or as arguments:\n"
+        )
+        print(
+            "Directory where images are located:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.path)
+            + "\n"
+        )
+        print("Pole length:\n" + args.pole_length + "cm")
+        print("\nImages to label:\nEvery", args.subset_to_label, "images")
+        confirmation = str(input("\n\nIs this OK? (y/n) "))
+        if confirmation.lower() != "y":
+            if confirmation.lower() == "n":
+                print(
+                    "\nEdit the config file, located at",
+                    os.getcwd()
+                    + "/config.toml, to your liking, and then re-run this file.\n",
+                )
+            else:
+                print("Invalid input.\n")
+            quit()
+
+    # dir = glob.glob(f"{args.path}/**/*")  # /*") ## path to data directory
     dir = list(
-        Path(args.datapath).rglob("*.JPG")
+        Path(args.path).rglob("*.JPG")
     )  # Recursively lists all files and directories
     dir = sorted(dir)
 
@@ -73,13 +117,13 @@ def main():
     ## load labels.csv
     write_headers_line = False
     try:
-        with open(f"{args.datapath}/labels.csv", "r") as labels2_csv:
+        with open(f"{args.path}/labels.csv", "r") as labels2_csv:
             lines = labels2_csv.readlines()
-            with open(f"{args.datapath}/labels.csv", "w") as labels2_csv_write:
+            with open(f"{args.path}/labels.csv", "w") as labels2_csv_write:
                 for line in lines:
-                    if (line != "\n"):
+                    if line != "\n":
                         labels2_csv_write.write(line)
-        with open(f"{args.datapath}/labels.csv", "r") as labels2_csv:
+        with open(f"{args.path}/labels.csv", "r") as labels2_csv:
             if not labels2_csv.readline().startswith('"filename"'):
                 write_headers_line = True
             else:
@@ -96,7 +140,7 @@ def main():
         write_headers_line = True
     if write_headers_line:
         print("labels.csv is corrupted or does not exist, creating...")
-        with open(f"{args.datapath}/labels.csv", "w") as labels2_csv:
+        with open(f"{args.path}/labels.csv", "w") as labels2_csv:
             labels2_csv.write(
                 '"filename","datetime","x1","y1","x2","y2","PixelLengths"'
             )
@@ -111,7 +155,10 @@ def main():
         if not len(prev_cameraID) or cameraID != prev_cameraID:
             prev_cameraID = cameraID
             mj = int(j / subset_to_label)
-            PixelLength = math.dist((float(topX[mj]), float(topY[mj])), (float(bottomX[mj]), float(bottomY[mj])))
+            PixelLength = math.dist(
+                (float(topX[mj]), float(topY[mj])),
+                (float(bottomX[mj]), float(bottomY[mj])),
+            )
             ## with the first photo, we will get some metadata
             conversion = pole_length / PixelLength
             ## and get metadata
@@ -134,7 +181,7 @@ def main():
             width, height, channel = img.shape
             ## assumes the cameras are stored in folder with their camera name
             figure = plt.figure(figsize=(20, 10), num=Path(file).name)
-            plt.imshow(img)
+            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             plt.title("label top and then bottom", fontweight="bold")
             top, bottom = plt.ginput(2)
             topX.append(top[0]), topY.append(top[1])
@@ -146,7 +193,7 @@ def main():
 
             ## save data to labels.csv
             nextline = f"\n{Path(file).name},{os.path.getctime(file)},{top[0]},{top[1]},{bottom[0]},{bottom[1]},{PixelLength}"
-            with open(f"{args.datapath}/labels.csv", "a") as labels2_csv:
+            with open(f"{args.path}/labels.csv", "a") as labels2_csv:
                 labels2_csv.write(nextline)
 
             filename.append(Path(file).name)
@@ -167,7 +214,7 @@ def main():
         }
     )
 
-    metadata.to_csv(f"{args.datapath}/pole_metadata.csv")
+    metadata.to_csv(f"{args.path}/pole_metadata.csv")
 
 
 if __name__ == "__main__":
