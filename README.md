@@ -39,4 +39,9 @@ Run the graphical configurator, which lets you pick file paths to use using your
 python configurator.py
 ```
 
+If the above command failed, run the following command and retry:
+```
+pip install crossfiledialog
+```
+
 Just like that! Enjoy your improved experience.
