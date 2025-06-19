@@ -28,4 +28,9 @@ Pull in the changes:
 git pull Nesitive main
 ```
 
+Create your config file:
+```
+cp config-example.toml config.toml
+```
+
 Just like that! Enjoy your improved experience.

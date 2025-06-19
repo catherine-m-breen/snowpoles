@@ -1,33 +1,21 @@
 import torch
 import os
 from model_download import download_models
+import tomllib
 
-"""
-!! Update ROOT_PATH before running !!
-"""
+# Read config.toml
+with open("config.toml", "rb") as configfile:
+    config = tomllib.load(configfile)
 
-ROOT_PATH = "../Snow Station Photos (BigW)/Current/2023-2024"  ## Folder where images and CSVs are stored
-OUTPUT_PATH = "./output1"  ## the folder where you want to store your custom model
-
-# learning parameters
-BATCH_SIZE = 64
-LR = 0.0001
-EPOCHS = 20
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# train/test split
-TEST_SPLIT = 0.2
-
-# Fine-tuning set-up
-FINETUNE = True
-
-# show dataset keypoint plot
-SHOW_DATASET_PLOT = False
-AUG = True
-
-# Path to model
-FT_PATH = "./models/CO_and_WA_model.pth"
-
+ROOT_PATH = config["paths"]["input_images"]
+OUTPUT_PATH = config["paths"]["models_output"]
+BATCH_SIZE = config["training"]["batch_size"]
+LR = config["training"]["lr"]
+EPOCHS = config["training"]["epochs"]
+DEVICE = config["training"]["device"]
+SHOW_DATASET_PLOT = config["training"]["show_dataset_plot"]
+AUG = config["training"]["aug"]
+FT_PATH = config["paths"]["trainee_model"]
 
 metadata = f"{ROOT_PATH}/pole_metadata.csv"
 labels = f"{ROOT_PATH}/labels.csv"

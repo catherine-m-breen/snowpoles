@@ -16,9 +16,8 @@ import torch
 import cv2
 import pandas as pd
 import numpy as np
-import config
+import tomllib
 
-# import config_cpu as config ## for cpu training
 import utils
 from torch.utils.data import Dataset, DataLoader
 import IPython
@@ -37,6 +36,9 @@ from pathlib import Path
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
+# Load config from config.toml
+with open("config.toml", "rb") as configfile:
+    config = tomllib.load(configfile)
 
 # Define a function to sample every third photo
 ## Only used for experiments
@@ -72,10 +74,10 @@ def train_test_split(csv_path, image_path):
     ].reset_index()
 
     # save labels to output folder
-    if not os.path.exists(f"{config.OUTPUT_PATH}"):
-        os.makedirs(f"{config.OUTPUT_PATH}", exist_ok=True)
-    training_samples.to_csv(f"{config.OUTPUT_PATH}/training_samples.csv")
-    valid_samples.to_csv(f"{config.OUTPUT_PATH}/valid_samples.csv")
+    if not os.path.exists(f"{config["paths"]["models_output"]}"):
+        os.makedirs(f"{config["paths"]["models_output"]}", exist_ok=True)
+    training_samples.to_csv(f"{config["paths"]["models_output"]}/training_samples.csv")
+    valid_samples.to_csv(f"{config["paths"]["models_output"]}/valid_samples.csv")
 
     print(
         f"# of examples we will now train on {len(training_samples)}, val on {len(valid_samples)}"
@@ -178,29 +180,29 @@ class snowPoleDataset(Dataset):
 
 # get the training and validation data samples
 training_samples, valid_samples = train_test_split(
-    f"{config.labels}", f"{config.ROOT_PATH}"
+    f"{config["paths"]["input_images"]}", f"{config["paths"]["input_images"]}"
 )
 
 # initialize the dataset - `snowPoleDataset()`
 train_data = snowPoleDataset(
-    training_samples, f"{config.ROOT_PATH}", aug=config.AUG
+    training_samples, f"{config["paths"]["input_images"]}", aug=config["training"]["aug"]
 )  ## we want all folders
 
 valid_data = snowPoleDataset(
-    valid_samples, f"{config.ROOT_PATH}", aug=False
+    valid_samples, f"{config["paths"]["input_images"]}", aug=False
 )  # we always want the transform to be the normal transform
 
 # prepare data loaders
 train_loader = DataLoader(
-    train_data, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=0
+    train_data, batch_size=config["training"]["batch_size"], shuffle=True, num_workers=0
 )
 valid_loader = DataLoader(
-    valid_data, batch_size=config.BATCH_SIZE, shuffle=False, num_workers=0
+    valid_data, batch_size=config["training"]["batch_size"], shuffle=False, num_workers=0
 )
 
 print(f"Training sample instances: {len(train_data)}")
 print(f"Validation sample instances: {len(valid_data)}")
 
-if config.SHOW_DATASET_PLOT:
+if config["training"]["show_dataset_plot"]:
     utils.dataset_keypoints_plot(train_data)
     utils.dataset_keypoints_plot(valid_data)
