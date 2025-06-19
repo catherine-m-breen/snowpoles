@@ -134,7 +134,7 @@ def main():
             width, height, channel = img.shape
             ## assumes the cameras are stored in folder with their camera name
             figure = plt.figure(figsize=(20, 10), num=Path(file).name)
-            plt.imshow(img)
+            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             plt.title("label top and then bottom", fontweight="bold")
             top, bottom = plt.ginput(2)
             topX.append(top[0]), topY.append(top[1])
