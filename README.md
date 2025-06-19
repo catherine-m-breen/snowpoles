@@ -33,5 +33,6 @@ Create your config file:
 ```
 cp config-example.toml config.toml
 ```
+Look inside your newly created config file and change the paths to point to where you keep things.
 
 Just like that! Enjoy your improved experience.
