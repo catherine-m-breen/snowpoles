@@ -4,3 +4,4 @@ src/__pycache__
 demo_predictions
 output1
 predictions
+config.toml
