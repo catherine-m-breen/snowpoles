@@ -18,7 +18,7 @@ subset_to_label = 10 # Label every N images
 [training]
 lr = 0.0001 # LR, whatever that is
 epochs = 20 # Epochs
-aug = true # AUGGGGG!
+aug = true # AAAAAUG!
 device = "cpu" # Device to use, either "cuda" or "cpu".
 batch_size = 64 # Batch size
 show_dataset_plot = false # Show dataset plot
