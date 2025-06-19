@@ -5,6 +5,7 @@ This fork has all of my improvements that haven't been merged into the official 
 
  - A tutorial for getting everything you need to work with this repository set up on Windows (see tutorial_windows.md)
  - No Miniconda/Anaconda needed. Ever.
+ - Universal config file, so you can "set it and forget it" and not have to include flags every time you run a command
  - Dark mode
  - Progress-saving while labeling images with labeling.py, so you can pick up where you left off and not have to relabel hundreds of images
  - Using the images' unique filenames to adapt across directory structures
