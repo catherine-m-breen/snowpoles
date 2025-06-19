@@ -1,23 +1,24 @@
 import torch
 import os
+from model_download import download_models
+import tomllib
 
-### THESE PATHS ARE FOR THE DEMO NONTRAINED DATA; PLEASE UPDATE WITH OWN PATHS"
-### All in snowpoles_data
-ROOT_PATH = './example_nontrained_data'
-OUTPUT_PATH = './output1'  ## the folder where you want to store your custom model
-metadata = './example_nontrained_data/pole_metadata.csv'
-labels = './example_nontrained_data/labels.csv'
+# Read config.toml
+with open("config.toml", "rb") as configfile:
+    config = tomllib.load(configfile)
 
-# learning parameters
-BATCH_SIZE = 64 
-LR = 0.0001
-EPOCHS = 20 #1000
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# train/test split
-TEST_SPLIT = 0.2 
-# show dataset keypoint plot
-SHOW_DATASET_PLOT = False
-AUG = True 
+ROOT_PATH = config["paths"]["input_images"]
+OUTPUT_PATH = config["paths"]["models_output"]
+BATCH_SIZE = config["training"]["batch_size"]
+LR = config["training"]["lr"]
+EPOCHS = config["training"]["epochs"]
+DEVICE = config["training"]["device"]
+SHOW_DATASET_PLOT = config["training"]["show_dataset_plot"]
+AUG = config["training"]["aug"]
+FT_PATH = config["paths"]["trainee_model"]
+
+metadata = f"{ROOT_PATH}/pole_metadata.csv"
+labels = f"{ROOT_PATH}/labels.csv"
 
 keypointColumns = ['x1', 'y1', 'x2', 'y2'] ## update
 

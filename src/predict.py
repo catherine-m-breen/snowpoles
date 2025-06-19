@@ -15,21 +15,11 @@ python src/predict.py --model_path './output1/model.pth' --img_dir './nontrained
 
 '''
 
-import torch
-import numpy as np
-import cv2
-import albumentations  ## may need to do pip install
-import config
-from model import snowPoleResNet50
+# Import startup libraries
 import argparse
-import glob
-import IPython
-import utils
-import pandas as pd
-from tqdm import tqdm
+import tomllib
 import os
-import matplotlib.pyplot as plt
-from scipy.spatial import distance
+from pathlib import Path
 
 def download_models(): 
     '''
@@ -47,10 +37,13 @@ def download_models():
         os.system(wget_command)
         return print('\n models download! \n')
     else:
-        return print('model already saved')
-    
-def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15):
-    file = file.split('.')[0]
+        return print("model already saved")
+
+
+def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
+    import matplotlib.pyplot as plt
+    #file = file.split(".")[0]
+    file = Path(file).stem  
     output_keypoint = keypoints.reshape(-1, 2)
     plt.imshow(image)
     for p in range(output_keypoint.shape[0]):
@@ -62,20 +55,32 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15
     plt.close()
 
 def load_model(args):
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
+    from model import snowPoleResNet50
+    import torch
+
+    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
     # load the model checkpoint
-    if args.model_path == 'models/CO_and_WA_model.pth': ## uses model from paper
-        model_path = 'models/CO_and_WA_model.pth'  
-        checkpoint = torch.load(model_path, map_location=torch.device(config.DEVICE)) 
-    else: ## your customized model
-        checkpoint = torch.load(args.model_path, map_location=torch.device('cpu')) 
+    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
+    checkpoint = torch.load(args.model, map_location=torch.device(args.device))
 
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model
 
-def predict(model, args, device): ## 
- 
+
+def predict(model, args, device):  ##
+    import cv2
+    import glob
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    from scipy.spatial import distance
+    import torch
+    from tqdm import tqdm
+
+    # Comment out this line to disable dark mode
+    plt.style.use("./themes/dark.mplstyle")
+
     if not os.path.exists(f"predictions"):
         os.makedirs(f"predictions", exist_ok=True)
 
@@ -85,17 +90,10 @@ def predict(model, args, device): ##
     snow_depths = []
 
     ## folder or directory
-    snowpolefiles1 = glob.glob(f"{args.img_folder}/*")
-    snowpolefiles2 = glob.glob(f"{args.img_dir}/**/*")
-    
-    ## checks for a directory
-    if args.img_dir != '/example_data': 
-        snowpolefiles = snowpolefiles2
-    else: # assumes it is a camerafolder
-        snowpolefiles = snowpolefiles1
+    snowpolefiles = glob.glob(f"{args.path}/**/*")
 
-    metadata = pd.read_csv(f"{args.metadata}")
-    
+    metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
+
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
     
@@ -160,13 +158,76 @@ def predict(model, args, device): ##
     return results
 
 def main():
-    # Argument parser for command-line arguments:
-    parser = argparse.ArgumentParser(description='Predict top and bottom coordinates.')
-    parser.add_argument('--model_path', required=False, help = 'Path to model', default = 'models/CO_and_WA_model.pth')
-    parser.add_argument('--img_dir', required=False, help='Path to camera image directory', default = '/example_data')
-    parser.add_argument('--img_folder', required=False, help='Path to camera image folder', default = "/example_data/cam1")
-    parser.add_argument('--metadata', required=False, help='Path to pole metadata', default = "/example_data/pole_metadata.csv")
+    # Argument parser
+    parser = argparse.ArgumentParser(description="Use a model to predict snow depth")
+    parser.add_argument(
+        "--model",
+        required=False,
+        help="model to use",
+    )
+    parser.add_argument("--path", help="directory where images are located")
+    parser.add_argument(
+        "--device", required=False, help='device to use for processing ("cpu" or "cuda")'
+    )
+    parser.add_argument(
+        "--output", required=False, help="directory in which to store marked images"
+    )
+    parser.add_argument(
+        "--no_confirm", required=False, help="skip confirmation", action="store_true"
+    )
+    global args
     args = parser.parse_args()
+
+    # Get arguments from config file if they weren't specified
+    with open("config.toml", "rb") as configfile:
+        config = tomllib.load(configfile)
+    if not args.model:
+        args.model = config["paths"]["trained_model"]
+    if not args.path:
+        args.path = config["paths"]["input_images"]
+    if not args.device:
+        args.device = config["training"]["device"]
+    if not args.output:
+        args.output = config["paths"]["images_output"]
+
+    # Confirmation
+    if not args.no_confirm:
+        print(
+            "\n\n# The following options were specified in config.toml or as arguments:\n"
+        )
+        print("Model to use:\n" + os.getcwd() + "/" + str(args.model) + "\n")
+        print(
+            "Directory where images are located:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.path)
+            + "\n"
+        )
+        print("Device to use:\n" + args.device + "\n")
+        print(
+            "Directory where marked images will be stored:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.output)
+            + "\n"
+        )
+        confirmation = str(input("\nIs this OK? (y/n) "))
+        if confirmation.lower() != "y":
+            if confirmation.lower() == "n":
+                print(
+                    "\nEdit the config file, located at",
+                    os.getcwd()
+                    + "/config.toml, to your liking, and then re-run this file.\n",
+                )
+            else:
+                print("Invalid input.\n")
+            quit()
+
+
+    # Import all libraries
+    import albumentations
+    import IPython
+    import utils
 
     model = load_model(args)
     device = 'cpu'
