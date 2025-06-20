@@ -39,12 +39,20 @@ def main():
         print(
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
-        print(
-            "Directory where images are located, by camera:\n"
-            + os.getcwd()
-            + "/"
-            + str(args.path)
-        )
+        if (args.path.startswith("/")):
+            print(
+                "Directory where images are located, by camera:\n"
+                + str(args.path)
+                + "\n"
+            )
+        else:
+            print(
+                "Directory where images are located, by camera:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.path)
+                + "\n"
+            )
         confirmation = str(input("\n\nIs this OK? (y/n) "))
         if confirmation.lower() != "y":
             if confirmation.lower() == "n":

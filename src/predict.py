@@ -196,13 +196,20 @@ def main():
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
         print("Model to use:\n" + os.getcwd() + "/" + str(args.model) + "\n")
-        print(
-            "Directory where images are located:\n"
-            + os.getcwd()
-            + "/"
-            + str(args.path)
-            + "\n"
-        )
+        if (args.path.startswith("/")):
+            print(
+                "Directory where images are located:\n"
+                + str(args.path)
+                + "\n"
+            )
+        else:
+            print(
+                "Directory where images are located:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.path)
+                + "\n"
+            )
         print("Device to use:\n" + args.device + "\n")
         print(
             "Directory where marked images will be stored:\n"
