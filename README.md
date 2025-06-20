@@ -50,7 +50,7 @@ python src/labeling.py --datapath [IMAGE_DIRECTORY] --pole_length [POLE LENGTH I
 EXAMPLE:
 ```
 python preprocess/rename_photos.py 
-python src/labeling.py --datapath 'nontrained_data' --pole_length '304.8' --subset_to_label '10'
+python src/labeling.py --datapath "nontrained_data" --pole_length "304.8" --subset_to_label "10"
 ```
 
 > [!NOTE]  
@@ -87,7 +87,7 @@ python src/predict.py --model_path [PATH TO CUSTOMIZED MODEL] --img_dir [IMAGE D
 ```
 EXAMPLE:
 ```
-python src/predict.py --model_path './output1/model.pth' --img_dir './nontrained_data'  --metadata './nontrained_data/pole_metadata.csv'
+python src/predict.py --model_path "./output1/model.pth" --img_dir "./nontrained_data"  --metadata "./nontrained_data/pole_metadata.csv"
 
 ```
 
@@ -101,7 +101,7 @@ python src/predict.py --model_path [PATH TO CUSTOMIZED MODEL] --img_folder [IMAG
 
 EXAMPLE:
 ```
-python src/predict.py --model_path './output1/model.pth' --img_folder './nontrained_data/TLS-A1N'  --metadata './nontrained_data/pole_metadata.csv'
+python src/predict.py --model_path "./output1/model.pth" --img_folder "./nontrained_data/TLS-A1N"  --metadata "./nontrained_data/pole_metadata.csv"
 ```
 
 **Note: the script only allows for a img_dir OR a img_folder because of how it uploads the images to local memory. Please use only one argument or the other. If both are provided, it will default to img_dir.
@@ -119,7 +119,7 @@ python src/depth_conversion.py --predictions_path [PREDICTIONS CSV] --metadata [
 ```
 EXAMPLE:
 ```
-python src/depth_conversion.py --predictions_path '/predictions/results.csv' --metadata 'example_nontrained_data/pole_metadata.csv'
+python src/depth_conversion.py --predictions_path "/predictions/results.csv" --metadata "example_nontrained_data/pole_metadata.csv"
 ```
 
 ## Basic packages:
