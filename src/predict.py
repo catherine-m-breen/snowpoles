@@ -192,7 +192,20 @@ def main():
         print(
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
-        print("Model to use:\n" + os.getcwd() + "/" + str(args.model) + "\n")
+        if (args.model.startswith("/")):
+            print(
+                "Model to use:\n"
+                + str(args.model)
+                + "\n"
+            )
+        else:
+            print(
+                "Model to use:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.model)
+                + "\n"
+            )
         if (args.path.startswith("/")):
             print(
                 "Directory where images are located:\n"
@@ -208,13 +221,21 @@ def main():
                 + "\n"
             )
         print("Device to use:\n" + args.device + "\n")
-        print(
-            "Directory where marked images will be stored:\n"
-            + os.getcwd()
-            + "/"
-            + str(args.output)
-            + "\n"
-        )
+        if (args.output.startswith("/")):
+            print(
+                "Directory where marked images will be stored:\n"
+                + str(args.output)
+                + "\n"
+            )
+        else:
+            print(
+                "Directory where marked images will be stored:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.output)
+                + "\n"
+            )
+
         confirmation = str(input("\nIs this OK? (y/n) "))
         if confirmation.lower() != "y":
             if confirmation.lower() == "n":
