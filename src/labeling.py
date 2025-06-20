@@ -69,13 +69,20 @@ def main():
         print(
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
-        print(
-            "Directory where images are located:\n"
-            + os.getcwd()
-            + "/"
-            + str(args.path)
-            + "\n"
-        )
+        if (args.path.startswith("/")):
+            print(
+                "Directory where images are located:\n"
+                + str(args.path)
+                + "\n"
+            )
+        else:
+            print(
+                "Directory where images are located:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.path)
+                + "\n"
+            )
         print("Pole length:\n" + args.pole_length + "cm")
         print("\nImages to label:\nEvery", args.subset_to_label, "images")
         confirmation = str(input("\n\nIs this OK? (y/n) "))
