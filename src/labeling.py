@@ -34,7 +34,6 @@ import tomllib
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
-
 def main():
 
     # Argument parser for command-line arguments:
@@ -70,13 +69,20 @@ def main():
         print(
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
-        print(
-            "Directory where images are located:\n"
-            + os.getcwd()
-            + "/"
-            + str(args.path)
-            + "\n"
-        )
+        if (args.path.startswith("/")):
+            print(
+                "Directory where images are located:\n"
+                + str(args.path)
+                + "\n"
+            )
+        else:
+            print(
+                "Directory where images are located:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.path)
+                + "\n"
+            )
         print("Pole length:\n" + args.pole_length + "cm")
         print("\nImages to label:\nEvery", args.subset_to_label, "images")
         confirmation = str(input("\n\nIs this OK? (y/n) "))
@@ -147,7 +153,9 @@ def main():
 
     ### loop to label every nth photo!
     i = 0
+
     prev_cameraID = ""
+
     for j, file in tqdm.tqdm(enumerate(dir)):
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
@@ -155,10 +163,7 @@ def main():
         if not len(prev_cameraID) or cameraID != prev_cameraID:
             prev_cameraID = cameraID
             mj = int(j / subset_to_label)
-            PixelLength = math.dist(
-                (float(topX[mj]), float(topY[mj])),
-                (float(bottomX[mj]), float(bottomY[mj])),
-            )
+            PixelLength = math.dist((float(topX[mj]), float(topY[mj])), (float(bottomX[mj]), float(bottomY[mj])))
             ## with the first photo, we will get some metadata
             conversion = pole_length / PixelLength
             ## and get metadata
