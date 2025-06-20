@@ -3,7 +3,7 @@
 ## Table of Contents
 1. [Overview](#overview)
 2. [Installing Python](#installing-python)
-3. [Install VSCode](#install-vscode)
+3. [Install VSCode](#installing-a-code-editor-vscodium)
 4. [Installing Git](#installing-git)
 5. [Accessing the GitHub Repository](#accessing-the-github-repository)
 6. [Preparing for First Use](#preparing-for-first-use)
