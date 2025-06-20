@@ -83,8 +83,8 @@ def main():
                 + str(args.path)
                 + "\n"
             )
-        print("Pole length:\n" + args.pole_length + "cm")
-        print("\nImages to label:\nEvery", args.subset_to_label, "images")
+        print("Pole length:\n" + str(args.pole_length) + "cm")
+        print("\nImages to label:\nEvery", str(args.subset_to_label), "images")
         confirmation = str(input("\n\nIs this OK? (y/n) "))
         if confirmation.lower() != "y":
             if confirmation.lower() == "n":
