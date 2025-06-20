@@ -43,10 +43,10 @@ def main():
         "--datapath", help="(deprecated) directory where images are located"
     )
     parser.add_argument(
-        "--pole_length", help="length of pole in cm, default 100", default="100"
+        "--pole_length", help="length of pole in cm"
     )
     parser.add_argument(
-        "--subset_to_label", help="label every N images, default 10", default="10"
+        "--subset_to_label", help="label every N images"
     )
     parser.add_argument(
         "--no_confirm", required=False, help="skip confirmation", action="store_true"
