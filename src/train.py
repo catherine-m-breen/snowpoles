@@ -1,4 +1,4 @@
-"""
+'''
 written by: Catherine Breen
 July 1, 2024
 
@@ -12,7 +12,7 @@ Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR03
 example run (after updating config)
 python src/train.py
 
-"""
+'''
 
 # Import startup libraries
 import argparse
@@ -96,7 +96,7 @@ if not args.no_confirm:
             print(
                 "\nEdit the config file, located at",
                 os.getcwd()
-                + "/config.toml, to your liking, and then re-run this file.\n",
+                + "/config.toml, to your liking, or edit the command line arguments if they were specified, and then re-run this file.\n",
             )
         else:
             print("Invalid input.\n")
@@ -117,8 +117,8 @@ from pathlib import Path
 from model_download import download_models
 from dataset import train_data, train_loader, valid_data, valid_loader
 
-matplotlib.style.use("ggplot")
-# start_time = time.time()
+matplotlib.style.use('ggplot')
+# start_time = time.time() 
 
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
@@ -140,7 +140,6 @@ print("fine-tuned model loaded...")
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
 criterion = nn.SmoothL1Loss()
 
-
 # training function
 def fit(model, dataloader, data):
     print("Training")
@@ -149,7 +148,7 @@ def fit(model, dataloader, data):
     train_running_loss = 0.0
     counter = 0
     # calculate the number of batches
-    num_batches = int(len(data) / dataloader.batch_size)
+    num_batches = int(len(data)/dataloader.batch_size)
     for i, data in tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
         image, keypoints = data["image"].to(args.device), data["keypoints"].to(
@@ -163,8 +162,8 @@ def fit(model, dataloader, data):
         train_running_loss += loss.item()
         loss.backward()
         optimizer.step()
-
-    train_loss = train_running_loss / counter
+        
+    train_loss = train_running_loss/counter
     return train_loss
 
 
@@ -176,7 +175,7 @@ def validate(model, dataloader, data, epoch):
     valid_running_loss = 0.0
     counter = 0
     # calculate the number of batches
-    num_batches = int(len(data) / dataloader.batch_size)
+    num_batches = int(len(data)/dataloader.batch_size)
     with torch.no_grad():
         for i, data in tqdm(enumerate(dataloader), total=num_batches):
             counter += 1
@@ -186,9 +185,7 @@ def validate(model, dataloader, data, epoch):
             # flatten the keypoints
             keypoints = keypoints.view(keypoints.size(0), -1)
             outputs = model(image)
-            loss = criterion(
-                outputs, keypoints
-            )  ## cross entropy loss between input and output
+            loss = criterion(outputs, keypoints) ## cross entropy loss between input and output
             valid_running_loss += loss.item()
             # plot the predicted validation keypoints after every...
             # ... predefined number of epochs
@@ -198,17 +195,16 @@ def validate(model, dataloader, data, epoch):
                 epoch + 1
             ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
                 utils.valid_keypoints_plot(image, outputs, keypoints, epoch)
-
-    valid_loss = valid_running_loss / counter
+        
+    valid_loss = valid_running_loss/counter
     return valid_loss
-
 
 train_loss = []
 val_loss = []
 ## early stopping ##
 #######################
 best_loss_val = np.inf
-best_loss_val_epoch = 0
+best_loss_val_epoch = 0 
 #######################
 for epoch in range(args.epochs):
 
@@ -218,7 +214,7 @@ for epoch in range(args.epochs):
     train_loss.append(train_epoch_loss)
     val_loss.append(val_epoch_loss)
     print(f"Train Loss: {train_epoch_loss:.4f}")
-    print(f"Val Loss: {val_epoch_loss:.4f}")
+    print(f'Val Loss: {val_epoch_loss:.4f}')
     ####### saving model every 50 epochs
     if (epoch % 50) == 0:
         torch.save(
@@ -233,17 +229,17 @@ for epoch in range(args.epochs):
 
     ####### early stopping #########
     if val_epoch_loss < best_loss_val:
-        best_loss_val = val_epoch_loss
-        best_loss_val_epoch = epoch
+                best_loss_val = val_epoch_loss
+                best_loss_val_epoch = epoch
     elif epoch > best_loss_val_epoch + 10:
-        break
+            break
 
 # loss plots
 plt.figure(figsize=(10, 7))
-plt.plot(train_loss, color="orange", label="train loss")
-plt.plot(val_loss, color="red", label="validataion loss")
-plt.xlabel("Epochs")
-plt.ylabel("Loss")
+plt.plot(train_loss, color='orange', label='train loss')
+plt.plot(val_loss, color='red', label='validataion loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
 plt.legend()
 plt.savefig(f"{args.output}/loss.png")
 plt.close()  # changed from plt.show()

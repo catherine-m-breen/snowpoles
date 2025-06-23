@@ -40,6 +40,12 @@ plt.style.use("./themes/dark.mplstyle")
 with open("config.toml", "rb") as configfile:
     config = tomllib.load(configfile)
 
+# Load config from config.toml
+with open("config.toml", "rb") as configfile:
+    config = tomllib.load(configfile)
+
+
+
 # Define a function to sample every third photo
 ## Only used for experiments
 def sample_every_x(group, x):
@@ -180,12 +186,14 @@ class snowPoleDataset(Dataset):
 
 # get the training and validation data samples
 training_samples, valid_samples = train_test_split(
-    f"{config["paths"]["input_images"]}", f"{config["paths"]["input_images"]}"
+    f"{config["paths"]["input_images"]}/labels.csv", config["paths"]["input_images"]
 )
 
 # initialize the dataset - `snowPoleDataset()`
 train_data = snowPoleDataset(
-    training_samples, f"{config["paths"]["input_images"]}", aug=config["training"]["aug"]
+    training_samples,
+    f"{config["paths"]["input_images"]}",
+    aug=config["training"]["aug"],
 )  ## we want all folders
 
 valid_data = snowPoleDataset(
@@ -197,7 +205,10 @@ train_loader = DataLoader(
     train_data, batch_size=config["training"]["batch_size"], shuffle=True, num_workers=0
 )
 valid_loader = DataLoader(
-    valid_data, batch_size=config["training"]["batch_size"], shuffle=False, num_workers=0
+    valid_data,
+    batch_size=config["training"]["batch_size"],
+    shuffle=False,
+    num_workers=0,
 )
 
 print(f"Training sample instances: {len(train_data)}")

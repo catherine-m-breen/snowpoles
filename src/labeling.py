@@ -12,7 +12,7 @@ x2,y2 = bottom
 
 The labels.csv file can then be directly pointed at train.py for fine-tuning. The user can then run predict.py to extract the snow depth.
 
-example run (double quotes will work on linux or windows)
+example run 
 
 python src/labeling.py --datapath "/path/to/nontrained/data" --pole_length "304.8" --subset_to_label "2"
 
@@ -43,10 +43,10 @@ def main():
         "--datapath", help="(deprecated) directory where images are located"
     )
     parser.add_argument(
-        "--pole_length", help="length of pole in cm, default 100", default="100"
+        "--pole_length", help="length of pole in cm"
     )
     parser.add_argument(
-        "--subset_to_label", help="label every N images, default 10", default="10"
+        "--subset_to_label", help="label every N images"
     )
     parser.add_argument(
         "--no_confirm", required=False, help="skip confirmation", action="store_true"
@@ -83,15 +83,15 @@ def main():
                 + str(args.path)
                 + "\n"
             )
-        print("Pole length:\n" + args.pole_length + "cm")
-        print("\nImages to label:\nEvery", args.subset_to_label, "images")
+        print("Pole length:\n" + str(args.pole_length) + "cm")
+        print("\nImages to label:\nEvery", str(args.subset_to_label), "images")
         confirmation = str(input("\n\nIs this OK? (y/n) "))
         if confirmation.lower() != "y":
             if confirmation.lower() == "n":
                 print(
                     "\nEdit the config file, located at",
                     os.getcwd()
-                    + "/config.toml, to your liking, and then re-run this file.\n",
+                    + "/config.toml, to your liking, or edit the command line arguments if they were specified, and then re-run this file.\n",
                 )
             else:
                 print("Invalid input.\n")
@@ -153,9 +153,7 @@ def main():
 
     ### loop to label every nth photo!
     i = 0
-
     prev_cameraID = ""
-
     for j, file in tqdm.tqdm(enumerate(dir)):
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
@@ -163,7 +161,10 @@ def main():
         if not len(prev_cameraID) or cameraID != prev_cameraID:
             prev_cameraID = cameraID
             mj = int(j / subset_to_label)
-            PixelLength = math.dist((float(topX[mj]), float(topY[mj])), (float(bottomX[mj]), float(bottomY[mj])))
+            PixelLength = math.dist(
+                (float(topX[mj]), float(topY[mj])),
+                (float(bottomX[mj]), float(bottomY[mj])),
+            )
             ## with the first photo, we will get some metadata
             conversion = pole_length / PixelLength
             ## and get metadata
@@ -212,8 +213,8 @@ def main():
         {
             "camera_id": pd.unique(cameraIDs),
             "pole_length_cm": pole_lengths,
-            "pole_length_px": (first_pole_pixel_length),
-            "pixel_cm_conversion": pd.unique(conversions),
+            "pole_length_px": first_pole_pixel_length,
+            "pixel_cm_conversion": conversions,
             "width": widths,
             "height": heights,
         }
