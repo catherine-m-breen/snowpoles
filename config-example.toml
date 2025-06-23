@@ -1,0 +1,24 @@
+# All paths are relative to the root of the repository. Use forward slashes as separators, they will work on Windows as well.
+# Traversing up is supported. Use ".." in the path to go up a directory.
+
+
+[paths]
+input_images = "nontrained_data" # Directory where images are located, by camera
+images_output = "predictions" # Directory where marked images should be stored
+trainee_model = "models/CO_and_WA_model.pth" # Model file to train
+trained_model = "models/trained/model.pth" # Trained model file to use
+models_output = "models/trained" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
+
+
+[labeling]
+pole_length = 104 # Length of poles
+subset_to_label = 10 # Label every N images
+
+
+[training]
+lr = 0.0001 # LR, whatever that is
+epochs = 20 # Epochs
+aug = true # AAAAAUG!
+device = "cpu" # Device to use, either "cuda" or "cpu".
+batch_size = 64 # Batch size
+show_dataset_plot = false # Show dataset plot
