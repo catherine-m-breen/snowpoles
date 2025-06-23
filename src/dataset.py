@@ -33,9 +33,6 @@ from sklearn.model_selection import train_test_split
 import os
 
 
-# Comment out this line to disable dark mode
-plt.style.use("./themes/dark.mplstyle")
-
 # Load config from config.toml
 with open("config.toml", "rb") as configfile:
     config = tomllib.load(configfile)

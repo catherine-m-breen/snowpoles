@@ -78,9 +78,6 @@ def predict(model, args, device):  ##
     import torch
     from tqdm import tqdm
 
-    # Comment out this line to disable dark mode
-    plt.style.use("./themes/dark.mplstyle")
-
     if not os.path.exists(f"predictions"):
         os.makedirs(f"predictions", exist_ok=True)
 
