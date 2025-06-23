@@ -65,7 +65,6 @@ if not args.no_confirm:
     print(
         "\n\n# The following options were specified in config.toml or as arguments:\n"
     )
-    print("Model to train:\n" + os.getcwd() + "/" + str(args.model) + "\n")
     if (args.model.startswith("/")):
         print(
             "Model to train:\n"
