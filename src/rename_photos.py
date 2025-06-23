@@ -59,7 +59,7 @@ def main():
                 print(
                     "\nEdit the config file, located at",
                     os.getcwd()
-                    + "/config.toml, to your liking, and then re-run this file.\n",
+                    + "/config.toml, to your liking, or edit the command line arguments if they were specified, and then re-run this file.\n",
                 )
             else:
                 print("Invalid input.\n")
