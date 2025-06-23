@@ -66,6 +66,20 @@ if not args.no_confirm:
         "\n\n# The following options were specified in config.toml or as arguments:\n"
     )
     print("Model to train:\n" + os.getcwd() + "/" + str(args.model) + "\n")
+    if (args.model.startswith("/")):
+        print(
+            "Model to train:\n"
+            + str(args.model)
+            + "\n"
+        )
+    else:
+        print(
+            "Model to train:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.model)
+            + "\n"
+        )
     if (args.path.startswith("/")):
         print(
             "Directory where images are located:\n"
@@ -81,13 +95,20 @@ if not args.no_confirm:
             + "\n"
         )
     print("Device to use:\n" + args.device + "\n")
-    print(
-        "Directory where generated models will be stored:\n"
-        + os.getcwd()
-        + "/"
-        + str(args.output)
-        + "\n"
-    )
+    if (args.output.startswith("/")):
+        print(
+            "Directory where generated models will be stored:\n"
+            + str(args.output)
+            + "\n"
+        )
+    else:
+        print(
+            "Directory where generated models will be stored:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.output)
+            + "\n"
+        )
     print("LR:\n" + str(args.lr) + "\n")
     print("Epochs:\n" + str(args.epochs) + "\n")
     confirmation = str(input("\nIs this OK? (y/n) "))
