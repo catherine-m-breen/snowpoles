@@ -16,6 +16,7 @@ example run
 
 python src/labeling.py --datapath "/path/to/nontrained/data" --pole_length "304.8" --subset_to_label "2"
 
+
 """
 
 import cv2

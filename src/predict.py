@@ -43,11 +43,9 @@ def load_model(args):
     # load the model checkpoint
     torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
     checkpoint = torch.load(args.model, map_location=torch.device(args.device))
-
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model
-
 
 def predict(model, args, device):  ##
     import cv2
@@ -58,7 +56,6 @@ def predict(model, args, device):  ##
     from scipy.spatial import distance
     import torch
     from tqdm import tqdm
-
     if not os.path.exists(f"predictions"):
         os.makedirs(f"predictions", exist_ok=True)
 

@@ -3,6 +3,7 @@ import os
 from model_download import download_models
 import tomllib
 
+
 # Read config.toml
 with open("config.toml", "rb") as configfile:
     config = tomllib.load(configfile)
@@ -24,3 +25,4 @@ keypointColumns = ['x1', 'y1', 'x2', 'y2'] ## update
 
 if not os.path.exists(FT_PATH):
     download_models("/".join(FT_PATH.split("/")[:-1]), FT_PATH.split("/")[-1])
+

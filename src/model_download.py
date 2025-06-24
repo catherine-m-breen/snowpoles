@@ -55,6 +55,5 @@ def download_models(save_path="./models", save_name="CO_and_WA_model.pth"):
     else:
         return print("\nA file with the specified output name already exists:\n" + args.output, "\n\nCheck config.toml if you did not specify a file on the command line.")
 
-
 if __name__ == "__main__":
     download_models()

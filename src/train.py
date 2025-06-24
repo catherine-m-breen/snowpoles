@@ -144,6 +144,7 @@ matplotlib.style.use('ggplot')
 if not os.path.exists(f"{args.output}"):
     os.makedirs(f"{args.output}", exist_ok=True)
 
+
 # model
 model = snowPoleResNet50(pretrained=True, requires_grad=True).to(args.device)
 
@@ -158,8 +159,13 @@ criterion = nn.SmoothL1Loss()
 
 # training function
 def fit(model, dataloader, data):
+
     print("Training")
     model.to(args.device)  ##
+
+    print('Training')
+    model.to(config.DEVICE) ##
+
     model.train()
     train_running_loss = 0.0
     counter = 0
@@ -167,9 +173,11 @@ def fit(model, dataloader, data):
     num_batches = int(len(data)/dataloader.batch_size)
     for i, data in tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
+
         image, keypoints = data["image"].to(args.device), data["keypoints"].to(
             args.device
         )
+
         # flatten the keypoints
         keypoints = keypoints.view(keypoints.size(0), -1)
         optimizer.zero_grad()
@@ -187,6 +195,7 @@ def fit(model, dataloader, data):
 def validate(model, dataloader, data, epoch):
     print("Validating")
     model.to(args.device)
+
     model.eval()
     valid_running_loss = 0.0
     counter = 0
@@ -195,9 +204,11 @@ def validate(model, dataloader, data, epoch):
     with torch.no_grad():
         for i, data in tqdm(enumerate(dataloader), total=num_batches):
             counter += 1
+
             image, keypoints = data["image"].to(args.device), data["keypoints"].to(
                 args.device
             )
+
             # flatten the keypoints
             keypoints = keypoints.view(keypoints.size(0), -1)
             outputs = model(image)
@@ -210,6 +221,7 @@ def validate(model, dataloader, data, epoch):
             if (
                 epoch + 1
             ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
+
                 utils.valid_keypoints_plot(image, outputs, keypoints, epoch)
         
     valid_loss = valid_running_loss/counter
@@ -243,6 +255,7 @@ for epoch in range(args.epochs):
             f"{args.output}/model_epoch{epoch}.pth",
         )
 
+
     ####### early stopping #########
     if val_epoch_loss < best_loss_val:
                 best_loss_val = val_epoch_loss
@@ -269,4 +282,5 @@ torch.save(
     f"{args.output}/model.pth",
 )  ### the last model
 print("DONE TRAINING")
+
 # print("My program took", time.time() - start_time, "to run")
