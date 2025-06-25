@@ -1,6 +1,7 @@
 venv
 models
 src/__pycache__
+tests/__pycache__
 demo_predictions
 output1
 predictions
