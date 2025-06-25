@@ -69,7 +69,7 @@ def main():
         print(
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
-        if (args.path.startswith("/")):
+        if (args.path.startswith("/") or args.path[1] == ":"):
             print(
                 "Directory where images are located:\n"
                 + str(args.path)
