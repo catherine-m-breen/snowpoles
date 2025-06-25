@@ -24,8 +24,8 @@ class LabelingTest(unittest.TestCase):
         self.assertTrue(os.path.exists("tests/data/pole_metadata.csv"))
 
     def test_labeling_autosave(self):
-        shutil.copyfile("tests/data/labels.csv", "tests/data/labels.csv.001")
-        shutil.copyfile("tests/data/pole_metadata.csv", "tests/data/pole_metadata.csv.001")
+        copyfile("tests/data/labels.csv", "tests/data/labels.csv.001")
+        copyfile("tests/data/pole_metadata.csv", "tests/data/pole_metadata.csv.001")
         labeling.label_photos("tests/data", 150, 6)
         self.assertTrue(filecmp("tests/data/labels.csv", "tests/data/labels.csv.001"))
         self.assertTrue(filecmp("tests/data/pole_metadata.csv", "tests/data/pole_metadata.csv.001"))
@@ -33,5 +33,7 @@ class LabelingTest(unittest.TestCase):
     def tearDown(self):
         os.remove("tests/data/labels.csv")
         os.remove("tests/data/pole_metadata.csv")
-        os.rename("tests/data/labels.old", "tests/data/labels.csv")
-        os.rename("tests/data/pole_metadata.old", "tests/data/pole_metadata.csv")
+        if (os.path.exists("tests/data/labels.old")):
+            os.rename("tests/data/labels.old", "tests/data/labels.csv")
+        if (os.path.exists("tests/data/pole_metadata.old")):
+            os.rename("tests/data/pole_metadata.old", "tests/data/pole_metadata.csv")
