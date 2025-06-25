@@ -2,6 +2,7 @@ import os
 from shutil import rmtree
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/src")
 names = []
@@ -23,7 +24,9 @@ class ModelDownloadTest(unittest.TestCase):
             os.mkdir("models")
 
     def test_download(self):
-        model_download.download_models()
+        with patch("builtins.print") as mock_print:
+            with patch("builtins.input", return_value="y") as mock_input:
+                model_download.download_models()
         self.assertGreater(os.path.getsize("models/CO_and_WA_model.pth"), 10000000, "Downloaded model smaller than 10MB, URL not likely valid")
 
     def tearDown(self):
