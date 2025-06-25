@@ -8,19 +8,16 @@ def main():
     parser = argparse.ArgumentParser(description="Download model")
     parser.add_argument("--output", help="path where model should be saved")
     args = parser.parse_args()
-    download_models()
 
-def download_models(save_path="./models", save_name="CO_and_WA_model.pth"):
-
-    """
     # Get arguments from config file if they weren't specified
-    args = None
     with open("config.toml", "rb") as configfile:
         config = tomllib.load(configfile)
     if not args.output:
         args.output = config["paths"]["trainee_model"]
-    """
-    
+
+    download_models(args.output.split("/")[:-1], args.output.split("/")[1])
+
+def download_models(save_path="./models", save_name="CO_and_WA_model.pth"):
     # see the Zenodo page for the latest models
     root = os.getcwd()
     if not os.path.exists(save_path):
