@@ -11,24 +11,51 @@ python src/demo.py
 
 '''
 
+import tomllib
+with open("config.toml", "rb") as configfile:
+    config = tomllib.load(configfile)
+
+if config["extras"]["verbose"]: print("[1/12] Importing torch...")
 import torch
+
+if config["extras"]["verbose"]: print("[2/12] Importing numpy...")
 import numpy as np
+
+if config["extras"]["verbose"]: print("[3/12] Importing cv2...")
 import cv2
+
+if config["extras"]["verbose"]: print("[4/12] Importing snowPoleResNet50...")
 from model import snowPoleResNet50
+
+if config["extras"]["verbose"]: print("[5/12] Importing glob...")
 import glob
+
+if config["extras"]["verbose"]: print("[6/12] Importing pandas...")
 import pandas as pd
+
+if config["extras"]["verbose"]: print("[7/12] Importing tqdm...")
 from tqdm import tqdm
+
+if config["extras"]["verbose"]: print("[8/12] Importing matplotlib...")
 import matplotlib.pyplot as plt
+
+if config["extras"]["verbose"]: print("[9/12] Importing distance...")
 from scipy.spatial import distance
+
+if config["extras"]["verbose"]: print("[10/12] Importing os...")
 import os
+
+if config["extras"]["verbose"]: print("[11/12] Importing Path...")
 from pathlib import Path
+
+if config["extras"]["verbose"]: print("[12/12] Importing download_models...")
 from model_download import download_models
 
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
 def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
-    file = file.split(".")[0]
+    file = file.split(".")[0].replace("\\", "/")
     output_keypoint = keypoints.reshape(-1, 2)
     plt.imshow(image)
     for p in range(output_keypoint.shape[0]):
@@ -36,6 +63,9 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
+    figpath = f"demo_predictions/pred_{file}.png"
+    if not os.path.exists("/".join(figpath.split("/")[:-1])):
+        os.makedirs("/".join(figpath.split("/")[:-1]))
     plt.savefig(f"demo_predictions/pred_{file}.png")
     plt.close()
 
@@ -79,7 +109,7 @@ def predict(model, device): ##
             image = image / 255.0   
 
             # again reshape to add grayscale channel format
-            filename = file.split('/')[-1]
+            filename = file.replace("\\", "/").split('/')[-1]
             Camera = filename.split('_')[0]
             
             ## add an empty dimension for sample size
@@ -115,11 +145,12 @@ def predict(model, device): ##
             total_length_pixels.append(total_length_pixel)
 
             ## snow depth conversion ## 
-            full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length_cm'].values[0]
-            pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
-            snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
-            snow_depths.append(snow_depth)
-            
+            for i, cam in enumerate(metadata["camera_id"]):
+                if cam == Camera:
+                    full_length_pole_cm = metadata['pole_length_cm'][i]
+                    pixel_cm_conversion = metadata['pixel_cm_conversion'][i]
+                    snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
+                    snow_depths.append(snow_depth)
 
     results = pd.DataFrame({'camera_id':Cameras, 'filename':filenames, \
         'x1_pred': x1s_pred, 'y1s_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
