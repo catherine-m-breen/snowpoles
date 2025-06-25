@@ -22,16 +22,14 @@ class LabelingTest(unittest.TestCase):
         labeling.label_photos("tests/data", 150, 6)
         self.assertTrue(os.path.exists("tests/data/labels.csv"))
         self.assertTrue(os.path.exists("tests/data/pole_metadata.csv"))
-        copyfile("tests/data/labels.csv", "tests/data/labels.old")
-        copyfile("tests/data/pole_metadata.csv", "tests/data/pole_metadata.old")
 
     def test_labeling_autosave(self):
-        copyfile("tests/data/labels.old", "tests/data/labels.csv")
-        copyfile("tests/data/pole_metadata.old", "tests/data/pole_metadata.csv")
+        copyfile("tests/data/test-labels.csv", "tests/data/labels.csv")
+        copyfile("tests/data/test-pole_metadata.csv", "tests/data/pole_metadata.csv")
         labeling.label_photos("tests/data", 150, 6)
-        self.assertTrue(filecmp.cmp("tests/data/labels.csv", "tests/data/labels.old"))
+        self.assertTrue(filecmp.cmp("tests/data/labels.csv", "tests/data/test-labels.csv"))
         self.assertTrue(
-            filecmp.cmp("tests/data/pole_metadata.csv", "tests/data/pole_metadata.old")
+            filecmp.cmp("tests/data/pole_metadata.csv", "tests/data/test-pole_metadata.csv")
         )
 
     def tearDown(self):
