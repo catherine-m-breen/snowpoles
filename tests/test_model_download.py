@@ -29,6 +29,12 @@ class ModelDownloadTest(unittest.TestCase):
                 model_download.download_models()
         self.assertGreater(os.path.getsize("models/CO_and_WA_model.pth"), 10000000, "Downloaded model smaller than 10MB, URL not likely valid")
 
+    def test_download_path(self):
+        with patch("builtins.print") as mock_print:
+            with patch("builtins.input", return_value="y") as mock_input:
+                model_download.download_models("models/", "nondefault_path.pth")
+        self.assertTrue(os.path.exists("models/nondefault_path.pth"), "Non-default output location is not respected")
+
     def tearDown(self):
         # Restore from backup
         rmtree("models")
