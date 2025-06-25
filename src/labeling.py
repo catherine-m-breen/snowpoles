@@ -34,6 +34,7 @@ import tomllib
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
+
 def main():
 
     # Argument parser for command-line arguments:
@@ -42,12 +43,8 @@ def main():
     parser.add_argument(
         "--datapath", help="(deprecated) directory where images are located"
     )
-    parser.add_argument(
-        "--pole_length", help="length of pole in cm"
-    )
-    parser.add_argument(
-        "--subset_to_label", help="label every N images"
-    )
+    parser.add_argument("--pole_length", help="length of pole in cm")
+    parser.add_argument("--subset_to_label", help="label every N images")
     parser.add_argument(
         "--no_confirm", required=False, help="skip confirmation", action="store_true"
     )
@@ -69,12 +66,8 @@ def main():
         print(
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
-        if (args.path.startswith("/") or args.path[1] == ":"):
-            print(
-                "Directory where images are located:\n"
-                + str(args.path)
-                + "\n"
-            )
+        if args.path.startswith("/") or args.path[1] == ":":
+            print("Directory where images are located:\n" + str(args.path) + "\n")
         else:
             print(
                 "Directory where images are located:\n"
@@ -158,23 +151,6 @@ def main():
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
 
-        if not len(prev_cameraID) or cameraID != prev_cameraID:
-            prev_cameraID = cameraID
-            mj = int(j / subset_to_label)
-            PixelLength = math.dist(
-                (float(topX[mj]), float(topY[mj])),
-                (float(bottomX[mj]), float(bottomY[mj])),
-            )
-            ## with the first photo, we will get some metadata
-            conversion = pole_length / PixelLength
-            ## and get metadata
-            first_pole_pixel_length.append(PixelLength)
-            conversions.append(conversion)
-            pole_lengths.append(pole_length)
-            img = cv2.imread(file)
-            width, height, channel = img.shape
-            heights.append(height), widths.append(width)
-
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
 
@@ -206,6 +182,24 @@ def main():
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
+
+        if not len(prev_cameraID) or cameraID != prev_cameraID:
+            prev_cameraID = cameraID
+            mj = int(j / subset_to_label)
+            PixelLength = math.dist(
+                (float(topX[mj]), float(topY[mj])),
+                (float(bottomX[mj]), float(bottomY[mj])),
+            )
+            ## with the first photo, we will get some metadata
+            conversion = pole_length / PixelLength
+            ## and get metadata
+            first_pole_pixel_length.append(PixelLength)
+            conversions.append(conversion)
+            pole_lengths.append(pole_length)
+            img = cv2.imread(file)
+            width, height, channel = img.shape
+            heights.append(height), widths.append(width)
+
         i += 1
 
     ## simplified table for snow depth conversion later on
