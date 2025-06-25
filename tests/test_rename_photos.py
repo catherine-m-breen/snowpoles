@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from shutil import copytree, rmtree
 import sys
 import unittest
@@ -9,14 +10,19 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/
 
 import rename_photos
 
-class RenamePhotosTest:
+
+class RenamePhotosTest(unittest.TestCase):
     def setUp(self):
         # Create folder with unnamed files
-        if os.path.exists("tests/data-unnamed"):
+        if not os.path.exists("tests/data-unnamed"):
             copytree("tests/data", "tests/data-unnamed")
         files = list(Path("tests/data-unnamed").rglob("*"))
         for file in files:
-            os.rename(file, file.split("_")[1:])
+            if file.is_file():
+                sfile = str(file).replace("\\", "/")
+                os.rename(
+                    sfile, "/".join(sfile.split("/")[:-1]) + "/" + sfile.split("/")[-1].split("_")[-1]
+                )
 
     def test_rename_photos(self):
         rename_photos.rename_photos("tests/data-unnamed")
