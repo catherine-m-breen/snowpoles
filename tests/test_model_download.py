@@ -30,24 +30,3 @@ class ModelDownloadTest(unittest.TestCase):
         # Restore from backup
         rmtree("models")
         os.rename("models.old", "models")
-
-"""
-class DemoTest(unittest.TestCase):
-    def setUp(self):
-
-# demo.py
-names.append("demo.py")
-print("==> Testing", names[-1])
-errors += [0]
-try:
-    import demo
-    demo.main()
-except Exception as error:
-    print("Error:", error)
-    errors[-1] += 1
-
-# Results
-print("\n\n\n# Test Results\n")
-for i, name in enumerate(names):
-    print(errors[i], "errors in", name)
-"""
