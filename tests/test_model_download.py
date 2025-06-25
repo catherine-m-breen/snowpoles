@@ -6,7 +6,6 @@ from unittest.mock import patch
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/src")
 
-## model_download
 
 import model_download
 
