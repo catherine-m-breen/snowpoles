@@ -8,18 +8,16 @@ def main():
     parser = argparse.ArgumentParser(description="Download model")
     parser.add_argument("--output", help="path where model should be saved")
     args = parser.parse_args()
-    download_models()
 
-def download_models(save_path="./models", save_name="CO_and_WA_model.pth"):
-
-    """
     # Get arguments from config file if they weren't specified
-    args = None
     with open("config.toml", "rb") as configfile:
         config = tomllib.load(configfile)
     if not args.output:
         args.output = config["paths"]["trainee_model"]
-    """
+
+    download_models()
+
+def download_models(save_path="./models", save_name="CO_and_WA_model.pth"):
     
     # see the Zenodo page for the latest models
     root = os.getcwd()
@@ -58,7 +56,7 @@ def download_models(save_path="./models", save_name="CO_and_WA_model.pth"):
         curl_command = f'curl -L --ssl-no-revoke "{url}" -o "{save_path + "/" + save_name}"'
         os.system(curl_command)
     else:
-        return print("\nA file with the specified output name already exists:\n" + args.output, "\n\nCheck config.toml if you did not specify a file on the command line.")
+        return print("\nA file with the specified output name already exists:\n" + save_path + "/" + save_name, "\n\nCheck config.toml if you did not specify a file on the command line.")
 
 
 if __name__ == "__main__":
