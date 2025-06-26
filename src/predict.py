@@ -190,7 +190,7 @@ def main():
                 + str(args.model)
                 + "\n"
             )
-        if (args.path.startswith("/")):
+        if (args.path.startswith("/") or args.path[1] == ":"):
             print(
                 "Directory where images are located:\n"
                 + str(args.path)
