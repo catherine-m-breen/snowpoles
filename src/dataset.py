@@ -183,37 +183,48 @@ class snowPoleDataset(Dataset):
             "filename": filename,
         }
 
+def prepare_dataset(input_images, aug, batch_size):
+    # get the training and validation data samples
+    training_samples, valid_samples = train_test_split(
+        f"{input_images}/labels.csv", input_images
+    )
 
-# get the training and validation data samples
-training_samples, valid_samples = train_test_split(
-    f"{config["paths"]["input_images"]}/labels.csv", config["paths"]["input_images"]
-)
+    # initialize the dataset - `snowPoleDataset()`
+    train_data = snowPoleDataset(
+        training_samples,
+        f"{input_images}",
+        aug=aug,
+    )  ## we want all folders
 
-# initialize the dataset - `snowPoleDataset()`
-train_data = snowPoleDataset(
-    training_samples,
-    f"{config["paths"]["input_images"]}",
-    aug=config["training"]["aug"],
-)  ## we want all folders
+    valid_data = snowPoleDataset(
+        valid_samples, f"{input_images}", aug=False
+    )  # we always want the transform to be the normal transform
 
-valid_data = snowPoleDataset(
-    valid_samples, f"{config["paths"]["input_images"]}", aug=False
-)  # we always want the transform to be the normal transform
+    # prepare data loaders
+    train_loader = DataLoader(
+        train_data, batch_size=batch_size, shuffle=True, num_workers=0
+    )
+    valid_loader = DataLoader(
+        valid_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=0,
+    )
 
-# prepare data loaders
-train_loader = DataLoader(
-    train_data, batch_size=config["training"]["batch_size"], shuffle=True, num_workers=0
-)
-valid_loader = DataLoader(
-    valid_data,
-    batch_size=config["training"]["batch_size"],
-    shuffle=False,
-    num_workers=0,
-)
+    results = {
+        "train_loader": train_loader,
+        "train_data": train_data,
+        "valid_loader": valid_loader,
+        "valid_data": valid_data
+    }
 
+    return results
+
+"""
 print(f"Training sample instances: {len(train_data)}")
 print(f"Validation sample instances: {len(valid_data)}")
 
 if config["training"]["show_dataset_plot"]:
     utils.dataset_keypoints_plot(train_data)
     utils.dataset_keypoints_plot(valid_data)
+"""

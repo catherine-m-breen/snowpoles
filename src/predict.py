@@ -21,7 +21,7 @@ import tomllib
 import os
 from pathlib import Path
 
-def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
+def vis_predicted_keypoints(file, image, keypoints, output, color=(0, 255, 0), diameter=15):
     import matplotlib.pyplot as plt
     #file = file.split(".")[0]
     file = Path(file).stem  
@@ -32,24 +32,24 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
-    plt.savefig(f"predictions/pred_{file}.png")
+    plt.savefig(f"{output}/pred_{file}.png")
     plt.close()
 
-def load_model(args):
+def load_model(path, device):
     from model import snowPoleResNet50
     import torch
 
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
+    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(device)
     # load the model checkpoint
     torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
-    checkpoint = torch.load(args.model, map_location=torch.device(args.device))
+    checkpoint = torch.load(path, map_location=torch.device(device))
 
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model
 
 
-def predict(model, args, device):  ##
+def predict(model, path, device, output):  ##
     import cv2
     import glob
     import matplotlib.pyplot as plt
@@ -62,8 +62,8 @@ def predict(model, args, device):  ##
     # Comment out this line to disable dark mode
     plt.style.use("./themes/dark.mplstyle")
 
-    if not os.path.exists(f"predictions"):
-        os.makedirs(f"predictions", exist_ok=True)
+    if not os.path.exists(f"{output}"):
+        os.makedirs(f"{output}", exist_ok=True)
 
     Cameras, filenames = [], []
     x1s_pred, y1s_pred, x2s_pred, y2s_pred = [], [], [], []
@@ -71,9 +71,9 @@ def predict(model, args, device):  ##
     snow_depths = []
 
     ## folder or directory
-    snowpolefiles = glob.glob(f"{args.path}/**/*")
+    snowpolefiles = glob.glob(f"{path}/**/*")
 
-    metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
+    metadata = pd.read_csv(f"{path}/pole_metadata.csv")
 
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
@@ -111,7 +111,7 @@ def predict(model, args, device):  ##
             pred_keypoint[1] = pred_keypoint[1] * (h / 224)
             pred_keypoint[3] = pred_keypoint[3] * (h /224)
 
-            vis_predicted_keypoints(filename, image, pred_keypoint,) 
+            vis_predicted_keypoints(filename, image, pred_keypoint, output) 
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
             
             Cameras.append(Camera)
@@ -134,7 +134,7 @@ def predict(model, args, device):  ##
         'x1_pred': x1s_pred, 'y1_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
                             'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths})
     
-    results.to_csv(f"predictions/results.csv")
+    results.to_csv(f"{output}/results.csv")
 
     return results
 
@@ -238,9 +238,8 @@ def main():
     import IPython
     import utils
 
-    model = load_model(args)
-    device = 'cpu'
-    predict(model, args, device)  
+    model = load_model(args.model, args.device)
+    predict(model, args.path, args.device, args.output)  
 
 if __name__ == '__main__':
     main()

@@ -34,6 +34,7 @@ import tomllib
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
+
 def main():
 
     # Argument parser for command-line arguments:
@@ -42,12 +43,8 @@ def main():
     parser.add_argument(
         "--datapath", help="(deprecated) directory where images are located"
     )
-    parser.add_argument(
-        "--pole_length", help="length of pole in cm"
-    )
-    parser.add_argument(
-        "--subset_to_label", help="label every N images"
-    )
+    parser.add_argument("--pole_length", help="length of pole in cm")
+    parser.add_argument("--subset_to_label", help="label every N images")
     parser.add_argument(
         "--no_confirm", required=False, help="skip confirmation", action="store_true"
     )
@@ -69,12 +66,8 @@ def main():
         print(
             "\n\n# The following options were specified in config.toml or as arguments:\n"
         )
-        if (args.path.startswith("/")):
-            print(
-                "Directory where images are located:\n"
-                + str(args.path)
-                + "\n"
-            )
+        if args.path.startswith("/"):
+            print("Directory where images are located:\n" + str(args.path) + "\n")
         else:
             print(
                 "Directory where images are located:\n"
@@ -97,10 +90,10 @@ def main():
                 print("Invalid input.\n")
             quit()
 
-    # dir = glob.glob(f"{args.path}/**/*")  # /*") ## path to data directory
-    dir = list(
-        Path(args.path).rglob("*.JPG")
-    )  # Recursively lists all files and directories
+    label_photos(args.path, args.pole_length, args.subset_to_label)
+
+def label_photos(path, pole_length, subset_to_label):
+    dir = list(Path(path).rglob("*.JPG"))
     dir = sorted(dir)
 
     ## labeling data
@@ -110,8 +103,8 @@ def main():
     creationTimes = []
 
     ## customized data
-    pole_length = np.float64(args.pole_length)
-    subset_to_label = np.int16(args.subset_to_label)
+    pole_length_f64 = np.float64(pole_length)
+    subset_to_label_i16 = np.int16(subset_to_label)
 
     ## some metadata data
     cameraIDs = []
@@ -123,13 +116,13 @@ def main():
     ## load labels.csv
     write_headers_line = False
     try:
-        with open(f"{args.path}/labels.csv", "r") as labels2_csv:
+        with open(f"{path}/labels.csv", "r") as labels2_csv:
             lines = labels2_csv.readlines()
-            with open(f"{args.path}/labels.csv", "w") as labels2_csv_write:
+            with open(f"{path}/labels.csv", "w") as labels2_csv_write:
                 for line in lines:
                     if line != "\n":
                         labels2_csv_write.write(line)
-        with open(f"{args.path}/labels.csv", "r") as labels2_csv:
+        with open(f"{path}/labels.csv", "r") as labels2_csv:
             if not labels2_csv.readline().startswith('"filename"'):
                 write_headers_line = True
             else:
@@ -146,7 +139,7 @@ def main():
         write_headers_line = True
     if write_headers_line:
         print("labels.csv is corrupted or does not exist, creating...")
-        with open(f"{args.path}/labels.csv", "w") as labels2_csv:
+        with open(f"{path}/labels.csv", "w") as labels2_csv:
             labels2_csv.write(
                 '"filename","datetime","x1","y1","x2","y2","PixelLengths"'
             )
@@ -160,17 +153,17 @@ def main():
 
         if not len(prev_cameraID) or cameraID != prev_cameraID:
             prev_cameraID = cameraID
-            mj = int(j / subset_to_label)
+            mj = int(j / subset_to_label_i16)
             PixelLength = math.dist(
                 (float(topX[mj]), float(topY[mj])),
                 (float(bottomX[mj]), float(bottomY[mj])),
             )
             ## with the first photo, we will get some metadata
-            conversion = pole_length / PixelLength
+            conversion = pole_length_f64 / PixelLength
             ## and get metadata
             first_pole_pixel_length.append(PixelLength)
             conversions.append(conversion)
-            pole_lengths.append(pole_length)
+            pole_lengths.append(pole_length_f64)
             img = cv2.imread(file)
             width, height, channel = img.shape
             heights.append(height), widths.append(width)
@@ -181,7 +174,7 @@ def main():
         if Path(file).name in filename:
             print(" ", Path(file).name, "has been labeled before, using stored data.")
 
-        if i % subset_to_label == 0 and (not Path(file).name in filename):
+        if i % subset_to_label_i16 == 0 and (not Path(file).name in filename):
             print(" ", Path(file).name)
             img = cv2.imread(file)
             width, height, channel = img.shape
@@ -199,7 +192,7 @@ def main():
 
             ## save data to labels.csv
             nextline = f"\n{Path(file).name},{os.path.getctime(file)},{top[0]},{top[1]},{bottom[0]},{bottom[1]},{PixelLength}"
-            with open(f"{args.path}/labels.csv", "a") as labels2_csv:
+            with open(f"{path}/labels.csv", "a") as labels2_csv:
                 labels2_csv.write(nextline)
 
             filename.append(Path(file).name)
@@ -220,7 +213,7 @@ def main():
         }
     )
 
-    metadata.to_csv(f"{args.path}/pole_metadata.csv")
+    metadata.to_csv(f"{path}/pole_metadata.csv")
 
 
 if __name__ == "__main__":
