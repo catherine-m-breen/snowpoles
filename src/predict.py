@@ -21,7 +21,7 @@ import tomllib
 import os
 from pathlib import Path
 
-def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
+def vis_predicted_keypoints(file, image, keypoints, output, color=(0, 255, 0), diameter=15):
     import matplotlib.pyplot as plt
     #file = file.split(".")[0]
     file = Path(file).stem  
@@ -32,7 +32,7 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
-    plt.savefig(f"predictions/pred_{file}.png")
+    plt.savefig(f"{output}/pred_{file}.png")
     plt.close()
 
 def load_model(path, device):
@@ -49,7 +49,7 @@ def load_model(path, device):
     return model
 
 
-def predict(model, path, device):  ##
+def predict(model, path, device, output):  ##
     import cv2
     import glob
     import matplotlib.pyplot as plt
@@ -62,8 +62,8 @@ def predict(model, path, device):  ##
     # Comment out this line to disable dark mode
     plt.style.use("./themes/dark.mplstyle")
 
-    if not os.path.exists(f"predictions"):
-        os.makedirs(f"predictions", exist_ok=True)
+    if not os.path.exists(f"{output}"):
+        os.makedirs(f"{output}", exist_ok=True)
 
     Cameras, filenames = [], []
     x1s_pred, y1s_pred, x2s_pred, y2s_pred = [], [], [], []
@@ -111,7 +111,7 @@ def predict(model, path, device):  ##
             pred_keypoint[1] = pred_keypoint[1] * (h / 224)
             pred_keypoint[3] = pred_keypoint[3] * (h /224)
 
-            vis_predicted_keypoints(filename, image, pred_keypoint,) 
+            vis_predicted_keypoints(filename, image, pred_keypoint, output) 
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
             
             Cameras.append(Camera)
@@ -134,7 +134,7 @@ def predict(model, path, device):  ##
         'x1_pred': x1s_pred, 'y1_pred': y1s_pred, 'x2_pred': x2s_pred, 'y2_pred': y2s_pred, \
                             'total_length_pixel': total_length_pixels, 'snow_depth':snow_depths})
     
-    results.to_csv(f"predictions/results.csv")
+    results.to_csv(f"{output}/results.csv")
 
     return results
 
@@ -239,8 +239,7 @@ def main():
     import utils
 
     model = load_model(args.model, args.device)
-    device = 'cpu'
-    predict(model, args.path, device)  
+    predict(model, args.path, args.device, args.output)  
 
 if __name__ == '__main__':
     main()
