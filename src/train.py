@@ -138,6 +138,7 @@ def train(output, device, model_arg, lr, epochs):
     import IPython
     import numpy as np
     from pathlib import Path
+    import os
     from model_download import download_models
     from dataset import prepare_dataset
 
@@ -285,3 +286,6 @@ def validate(model, dataloader, data, epoch):
         
     valid_loss = valid_running_loss/counter
     return valid_loss
+
+if __name__ == "__main__":
+    main()
