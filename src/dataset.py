@@ -183,7 +183,7 @@ class snowPoleDataset(Dataset):
             "filename": filename,
         }
 
-def prepare_dataset(input_images):
+def prepare_dataset(input_images, aug):
     # get the training and validation data samples
     training_samples, valid_samples = train_test_split(
         f"{input_images}/labels.csv", input_images
@@ -193,7 +193,7 @@ def prepare_dataset(input_images):
     train_data = snowPoleDataset(
         training_samples,
         f"{input_images}",
-        aug=config["training"]["aug"],
+        aug=aug,
     )  ## we want all folders
 
     valid_data = snowPoleDataset(
