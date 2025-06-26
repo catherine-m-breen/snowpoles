@@ -181,8 +181,8 @@ def train(output, device, model_arg, lr, epochs):
     for epoch in range(epochs):
 
         print(f"Epoch {epoch+1} of {epochs}")
-        train_epoch_loss = fit(model, train_loader, train_data, device)
-        val_epoch_loss = validate(model, valid_loader, valid_data, epoch, device, output)
+        train_epoch_loss = fit(model, train_loader, train_data, device, optimizer, criterion)
+        val_epoch_loss = validate(model, valid_loader, valid_data, epoch, device, output, criterion)
         train_loss.append(train_epoch_loss)
         val_loss.append(val_epoch_loss)
         print(f"Train Loss: {train_epoch_loss:.4f}")
@@ -229,7 +229,8 @@ def train(output, device, model_arg, lr, epochs):
 
 
 # training function
-def fit(model, dataloader, data, device):
+def fit(model, dataloader, data, device, optimizer, criterion):
+    import tqdm
     print("Training")
     model.to(device)  ##
     model.train()
@@ -237,7 +238,7 @@ def fit(model, dataloader, data, device):
     counter = 0
     # calculate the number of batches
     num_batches = int(len(data)/dataloader.batch_size)
-    for i, data in tqdm(enumerate(dataloader), total=num_batches):
+    for i, data in tqdm.tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
         image, keypoints = data["image"].to(device), data["keypoints"].to(
             device
@@ -256,7 +257,10 @@ def fit(model, dataloader, data, device):
 
 
 # validation function
-def validate(model, dataloader, data, epoch, device, output):
+def validate(model, dataloader, data, epoch, device, output, criterion):
+    import torch
+    import tqdm
+    import os
     print("Validating")
     model.to(device)
     model.eval()
@@ -265,7 +269,7 @@ def validate(model, dataloader, data, epoch, device, output):
     # calculate the number of batches
     num_batches = int(len(data)/dataloader.batch_size)
     with torch.no_grad():
-        for i, data in tqdm(enumerate(dataloader), total=num_batches):
+        for i, data in tqdm.tqdm(enumerate(dataloader), total=num_batches):
             counter += 1
             image, keypoints = data["image"].to(device), data["keypoints"].to(
                 device
