@@ -23,4 +23,4 @@ labels = f"{ROOT_PATH}/labels.csv"
 keypointColumns = ['x1', 'y1', 'x2', 'y2'] ## update
 
 if not os.path.exists(FT_PATH):
-    download_models(FT_PATH.split("/")[:-1], FT_PATH.split("/")[-1])
+    download_models("/".join(FT_PATH.split("/")[:-1]), FT_PATH.split("/")[-1])
