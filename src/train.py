@@ -181,8 +181,8 @@ def train(output, device, model_arg, lr, epochs):
     for epoch in range(epochs):
 
         print(f"Epoch {epoch+1} of {epochs}")
-        train_epoch_loss = fit(model, train_loader, train_data)
-        val_epoch_loss = validate(model, valid_loader, valid_data, epoch)
+        train_epoch_loss = fit(model, train_loader, train_data, device)
+        val_epoch_loss = validate(model, valid_loader, valid_data, epoch, device, output)
         train_loss.append(train_epoch_loss)
         val_loss.append(val_epoch_loss)
         print(f"Train Loss: {train_epoch_loss:.4f}")
@@ -229,9 +229,9 @@ def train(output, device, model_arg, lr, epochs):
 
 
 # training function
-def fit(model, dataloader, data):
+def fit(model, dataloader, data, device):
     print("Training")
-    model.to(args.device)  ##
+    model.to(device)  ##
     model.train()
     train_running_loss = 0.0
     counter = 0
@@ -239,8 +239,8 @@ def fit(model, dataloader, data):
     num_batches = int(len(data)/dataloader.batch_size)
     for i, data in tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
-        image, keypoints = data["image"].to(args.device), data["keypoints"].to(
-            args.device
+        image, keypoints = data["image"].to(device), data["keypoints"].to(
+            device
         )
         # flatten the keypoints
         keypoints = keypoints.view(keypoints.size(0), -1)
@@ -256,9 +256,9 @@ def fit(model, dataloader, data):
 
 
 # validation function
-def validate(model, dataloader, data, epoch):
+def validate(model, dataloader, data, epoch, device, output):
     print("Validating")
-    model.to(args.device)
+    model.to(device)
     model.eval()
     valid_running_loss = 0.0
     counter = 0
@@ -267,8 +267,8 @@ def validate(model, dataloader, data, epoch):
     with torch.no_grad():
         for i, data in tqdm(enumerate(dataloader), total=num_batches):
             counter += 1
-            image, keypoints = data["image"].to(args.device), data["keypoints"].to(
-                args.device
+            image, keypoints = data["image"].to(device), data["keypoints"].to(
+                device
             )
             # flatten the keypoints
             keypoints = keypoints.view(keypoints.size(0), -1)
@@ -277,8 +277,8 @@ def validate(model, dataloader, data, epoch):
             valid_running_loss += loss.item()
             # plot the predicted validation keypoints after every...
             # ... predefined number of epochs
-            if not os.path.exists(args.output):
-                os.makedirs(args.output, exist_ok=True)
+            if not os.path.exists(output):
+                os.makedirs(output, exist_ok=True)
             if (
                 epoch + 1
             ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
