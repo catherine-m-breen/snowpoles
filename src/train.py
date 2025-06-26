@@ -136,7 +136,7 @@ import IPython
 import numpy as np
 from pathlib import Path
 from model_download import download_models
-from dataset import train_data, train_loader, valid_data, valid_loader
+from dataset import prepare_dataset
 
 matplotlib.style.use('ggplot')
 # start_time = time.time() 
@@ -219,6 +219,13 @@ def validate(model, dataloader, data, epoch):
         
     valid_loss = valid_running_loss/counter
     return valid_loss
+
+prepared_dataset = prepare_dataset()
+print(prepared_dataset)
+train_loader = prepared_dataset["train_loader"]
+train_data = prepared_dataset["train_data"]
+valid_loader = prepared_dataset["valid_loader"]
+valid_data = prepared_dataset["valid_data"]
 
 train_loss = []
 val_loss = []
