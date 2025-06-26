@@ -21,8 +21,8 @@ class TrainingTest(unittest.TestCase):
         copyfile("tests/data/test-pole_metadata.csv", "tests/data/pole_metadata.csv")
 
     def test_train(self):
-        train.train("tests/models", "cpu", "models/trainee_model.pth", 0.0001, 20)
-        self.assertTrue(os.path.exists("tests/models/models.pth"))
+        train.train("tests/models", "cpu", "models/CO_and_WA_model.pth", 0.0001, 20)
+        self.assertTrue(os.path.exists("tests/models/model.pth"))
 
     def tearDown(self):
         os.remove("tests/data/labels.csv")
