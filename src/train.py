@@ -125,7 +125,7 @@ def main():
             quit()
     train(args.output, args.device, args.model, args.lr, args.epochs)
 
-def train(output, device, model, lr, epochs):
+def train(output, device, model_arg, lr, epochs):
     # Import all libraries
     import torch
     import torch.optim as optim
@@ -156,7 +156,7 @@ def train(output, device, model, lr, epochs):
     model = snowPoleResNet50(pretrained=True, requires_grad=True).to(device)
 
     torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
-    checkpoint = torch.load(model, map_location=torch.device(device))
+    checkpoint = torch.load(model_arg, map_location=torch.device(device))
     model.load_state_dict(checkpoint["model_state_dict"])
     print("fine-tuned model loaded...")
 
