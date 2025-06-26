@@ -35,21 +35,21 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=
     plt.savefig(f"predictions/pred_{file}.png")
     plt.close()
 
-def load_model(args):
+def load_model(path, device):
     from model import snowPoleResNet50
     import torch
 
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
+    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(device)
     # load the model checkpoint
     torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
-    checkpoint = torch.load(args.model, map_location=torch.device(args.device))
+    checkpoint = torch.load(path, map_location=torch.device(device))
 
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model
 
 
-def predict(model, args, device):  ##
+def predict(model, path, device):  ##
     import cv2
     import glob
     import matplotlib.pyplot as plt
@@ -71,9 +71,9 @@ def predict(model, args, device):  ##
     snow_depths = []
 
     ## folder or directory
-    snowpolefiles = glob.glob(f"{args.path}/**/*")
+    snowpolefiles = glob.glob(f"{path}/**/*")
 
-    metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
+    metadata = pd.read_csv(f"{path}/pole_metadata.csv")
 
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
@@ -238,9 +238,9 @@ def main():
     import IPython
     import utils
 
-    model = load_model(args)
+    model = load_model(args.model, args.device)
     device = 'cpu'
-    predict(model, args, device)  
+    predict(model, args.path, device)  
 
 if __name__ == '__main__':
     main()
