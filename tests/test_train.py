@@ -12,10 +12,6 @@ import train
 
 class TrainingTest(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("tests/data/labels.csv"):
-            os.rename("tests/data/labels.csv", "tests/data/labels.old")
-        if os.path.exists("tests/data/pole_metadata.csv"):
-            os.rename("tests/data/pole_metadata.csv", "tests/data/pole_metadata.old")
         copyfile("tests/data/test-labels.csv", "tests/data/labels.csv")
         copyfile("tests/data/test-pole_metadata.csv", "tests/data/pole_metadata.csv")
 
@@ -26,7 +22,3 @@ class TrainingTest(unittest.TestCase):
     def tearDown(self):
         os.remove("tests/data/labels.csv")
         os.remove("tests/data/pole_metadata.csv")
-        if os.path.exists("tests/data/labels.old"):
-            os.rename("tests/data/labels.old", "tests/data/labels.csv")
-        if os.path.exists("tests/data/pole_metadata.old"):
-            os.rename("tests/data/pole_metadata.old", "tests/data/pole_metadata.csv")
