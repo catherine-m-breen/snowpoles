@@ -220,7 +220,7 @@ def validate(model, dataloader, data, epoch):
     valid_loss = valid_running_loss/counter
     return valid_loss
 
-prepared_dataset = prepare_dataset("tests/data", True)
+prepared_dataset = prepare_dataset("tests/data", True, 4)
 print(prepared_dataset)
 train_loader = prepared_dataset["train_loader"]
 train_data = prepared_dataset["train_data"]

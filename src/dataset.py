@@ -183,7 +183,7 @@ class snowPoleDataset(Dataset):
             "filename": filename,
         }
 
-def prepare_dataset(input_images, aug):
+def prepare_dataset(input_images, aug, batch_size):
     # get the training and validation data samples
     training_samples, valid_samples = train_test_split(
         f"{input_images}/labels.csv", input_images
@@ -202,11 +202,11 @@ def prepare_dataset(input_images, aug):
 
     # prepare data loaders
     train_loader = DataLoader(
-        train_data, batch_size=config["training"]["batch_size"], shuffle=True, num_workers=0
+        train_data, batch_size=batch_size, shuffle=True, num_workers=0
     )
     valid_loader = DataLoader(
         valid_data,
-        batch_size=config["training"]["batch_size"],
+        batch_size=batch_size,
         shuffle=False,
         num_workers=0,
     )
