@@ -151,23 +151,6 @@ def label_photos(path, pole_length, subset_to_label):
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
 
-        if not len(prev_cameraID) or cameraID != prev_cameraID:
-            prev_cameraID = cameraID
-            mj = int(j / subset_to_label_i16)
-            PixelLength = math.dist(
-                (float(topX[mj]), float(topY[mj])),
-                (float(bottomX[mj]), float(bottomY[mj])),
-            )
-            ## with the first photo, we will get some metadata
-            conversion = pole_length_f64 / PixelLength
-            ## and get metadata
-            first_pole_pixel_length.append(PixelLength)
-            conversions.append(conversion)
-            pole_lengths.append(pole_length_f64)
-            img = cv2.imread(file)
-            width, height, channel = img.shape
-            heights.append(height), widths.append(width)
-
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
 
@@ -199,6 +182,24 @@ def label_photos(path, pole_length, subset_to_label):
             creationTime = os.path.getctime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             creationTimes.append(dt_c)
+
+        if not len(prev_cameraID) or cameraID != prev_cameraID:
+            prev_cameraID = cameraID
+            mj = int(j / subset_to_label_i16)
+            PixelLength = math.dist(
+                (float(topX[mj]), float(topY[mj])),
+                (float(bottomX[mj]), float(bottomY[mj])),
+            )
+            ## with the first photo, we will get some metadata
+            conversion = pole_length_f64 / PixelLength
+            ## and get metadata
+            first_pole_pixel_length.append(PixelLength)
+            conversions.append(conversion)
+            pole_lengths.append(pole_length_f64)
+            img = cv2.imread(file)
+            width, height, channel = img.shape
+            heights.append(height), widths.append(width)
+
         i += 1
 
     ## simplified table for snow depth conversion later on
