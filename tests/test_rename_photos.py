@@ -26,8 +26,8 @@ class RenamePhotosTest(unittest.TestCase):
 
     def test_rename_photos(self):
         rename_photos.rename_photos("tests/data-unnamed")
-        self.assertTrue(os.path.exists("tests/data/E9E/E9E_WSCT0209.JPG"))
-        self.assertTrue(os.path.exists("tests/data/W6B/W6B_WSCT0644.JPG"))
+        self.assertTrue(os.path.exists("tests/data-unnamed/E9E/E9E_WSCT0209.JPG"))
+        self.assertTrue(os.path.exists("tests/data-unnamed/W6B/W6B_WSCT0644.JPG"))
 
     def tearDown(self):
         # Remove created folder
