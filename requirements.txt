@@ -10,5 +10,7 @@ IPython==8.4.0
 opencv-python #version = 4.6.0.66
 scipy
 torchmetrics==0.11.3
-torchvision #=0.13.1
-pretrainedmodels #0.7.4
+torchvision #==0.13.1
+pretrainedmodels #==0.7.4
+crossfiledialog
+pywin32

@@ -3,7 +3,6 @@ import os
 from model_download import download_models
 import tomllib
 
-
 # Read config.toml
 with open("config.toml", "rb") as configfile:
     config = tomllib.load(configfile)

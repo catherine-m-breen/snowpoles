@@ -1,4 +1,4 @@
-'''
+"""
 written by: Catherine Breen
 July 1, 2024
 
@@ -12,7 +12,7 @@ Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR03
 example run (after updating config)
 python src/train.py
 
-'''
+"""
 
 # Import startup libraries
 import argparse
@@ -33,11 +33,11 @@ parser.add_argument(
 parser.add_argument(
     "--output", required=False, help="directory in which to store trained models"
 )
+parser.add_argument("--epochs", required=False, help="epochs")
 parser.add_argument(
-    "--epochs", required=False, help="epochs"
-)
-parser.add_argument(
-    "--lr", required=False, help="please let us know what this setting does; we've been afraid to try it"
+    "--lr",
+    required=False,
+    help="please let us know what this setting does; we've been afraid to try it",
 )
 parser.add_argument(
     "--no_confirm", required=False, help="skip confirmation", action="store_true"
@@ -65,26 +65,12 @@ if not args.no_confirm:
     print(
         "\n\n# The following options were specified in config.toml or as arguments:\n"
     )
-    if (args.model.startswith("/")):
-        print(
-            "Model to train:\n"
-            + str(args.model)
-            + "\n"
-        )
+    if args.model.startswith("/"):
+        print("Model to train:\n" + str(args.model) + "\n")
     else:
-        print(
-            "Model to train:\n"
-            + os.getcwd()
-            + "/"
-            + str(args.model)
-            + "\n"
-        )
-    if (args.path.startswith("/")):
-        print(
-            "Directory where images are located:\n"
-            + str(args.path)
-            + "\n"
-        )
+        print("Model to train:\n" + os.getcwd() + "/" + str(args.model) + "\n")
+    if args.path.startswith("/") or args.path[1] == ":":
+        print("Directory where images are located:\n" + str(args.path) + "\n")
     else:
         print(
             "Directory where images are located:\n"
@@ -94,7 +80,7 @@ if not args.no_confirm:
             + "\n"
         )
     print("Device to use:\n" + args.device + "\n")
-    if (args.output.startswith("/")):
+    if args.output.startswith("/"):
         print(
             "Directory where generated models will be stored:\n"
             + str(args.output)
@@ -137,13 +123,16 @@ from pathlib import Path
 from model_download import download_models
 from dataset import train_data, train_loader, valid_data, valid_loader
 
-matplotlib.style.use('ggplot')
-# start_time = time.time() 
+matplotlib.style.use("ggplot")
+# start_time = time.time()
+
+# Comment out this line to disable dark mode
+plt.style.use("./themes/dark.mplstyle")
+
 
 ## create output path
 if not os.path.exists(f"{args.output}"):
     os.makedirs(f"{args.output}", exist_ok=True)
-
 
 # model
 model = snowPoleResNet50(pretrained=True, requires_grad=True).to(args.device)
@@ -157,27 +146,21 @@ print("fine-tuned model loaded...")
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
 criterion = nn.SmoothL1Loss()
 
+
 # training function
 def fit(model, dataloader, data):
-
     print("Training")
     model.to(args.device)  ##
-
-    print('Training')
-    model.to(config.DEVICE) ##
-
     model.train()
     train_running_loss = 0.0
     counter = 0
     # calculate the number of batches
-    num_batches = int(len(data)/dataloader.batch_size)
+    num_batches = int(len(data) / dataloader.batch_size)
     for i, data in tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
-
         image, keypoints = data["image"].to(args.device), data["keypoints"].to(
             args.device
         )
-
         # flatten the keypoints
         keypoints = keypoints.view(keypoints.size(0), -1)
         optimizer.zero_grad()
@@ -186,8 +169,8 @@ def fit(model, dataloader, data):
         train_running_loss += loss.item()
         loss.backward()
         optimizer.step()
-        
-    train_loss = train_running_loss/counter
+
+    train_loss = train_running_loss / counter
     return train_loss
 
 
@@ -195,24 +178,23 @@ def fit(model, dataloader, data):
 def validate(model, dataloader, data, epoch):
     print("Validating")
     model.to(args.device)
-
     model.eval()
     valid_running_loss = 0.0
     counter = 0
     # calculate the number of batches
-    num_batches = int(len(data)/dataloader.batch_size)
+    num_batches = int(len(data) / dataloader.batch_size)
     with torch.no_grad():
         for i, data in tqdm(enumerate(dataloader), total=num_batches):
             counter += 1
-
             image, keypoints = data["image"].to(args.device), data["keypoints"].to(
                 args.device
             )
-
             # flatten the keypoints
             keypoints = keypoints.view(keypoints.size(0), -1)
             outputs = model(image)
-            loss = criterion(outputs, keypoints) ## cross entropy loss between input and output
+            loss = criterion(
+                outputs, keypoints
+            )  ## cross entropy loss between input and output
             valid_running_loss += loss.item()
             # plot the predicted validation keypoints after every...
             # ... predefined number of epochs
@@ -221,18 +203,18 @@ def validate(model, dataloader, data, epoch):
             if (
                 epoch + 1
             ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
-
                 utils.valid_keypoints_plot(image, outputs, keypoints, epoch)
-        
-    valid_loss = valid_running_loss/counter
+
+    valid_loss = valid_running_loss / counter
     return valid_loss
+
 
 train_loss = []
 val_loss = []
 ## early stopping ##
 #######################
 best_loss_val = np.inf
-best_loss_val_epoch = 0 
+best_loss_val_epoch = 0
 #######################
 for epoch in range(args.epochs):
 
@@ -242,7 +224,7 @@ for epoch in range(args.epochs):
     train_loss.append(train_epoch_loss)
     val_loss.append(val_epoch_loss)
     print(f"Train Loss: {train_epoch_loss:.4f}")
-    print(f'Val Loss: {val_epoch_loss:.4f}')
+    print(f"Val Loss: {val_epoch_loss:.4f}")
     ####### saving model every 50 epochs
     if (epoch % 50) == 0:
         torch.save(
@@ -255,20 +237,19 @@ for epoch in range(args.epochs):
             f"{args.output}/model_epoch{epoch}.pth",
         )
 
-
     ####### early stopping #########
     if val_epoch_loss < best_loss_val:
-                best_loss_val = val_epoch_loss
-                best_loss_val_epoch = epoch
+        best_loss_val = val_epoch_loss
+        best_loss_val_epoch = epoch
     elif epoch > best_loss_val_epoch + 10:
-            break
+        break
 
 # loss plots
 plt.figure(figsize=(10, 7))
-plt.plot(train_loss, color='orange', label='train loss')
-plt.plot(val_loss, color='red', label='validataion loss')
-plt.xlabel('Epochs')
-plt.ylabel('Loss')
+plt.plot(train_loss, color="orange", label="train loss")
+plt.plot(val_loss, color="red", label="validataion loss")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
 plt.legend()
 plt.savefig(f"{args.output}/loss.png")
 plt.close()  # changed from plt.show()
@@ -282,5 +263,4 @@ torch.save(
     f"{args.output}/model.pth",
 )  ### the last model
 print("DONE TRAINING")
-
 # print("My program took", time.time() - start_time, "to run")

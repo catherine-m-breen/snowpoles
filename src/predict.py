@@ -56,6 +56,10 @@ def predict(model, args, device):  ##
     from scipy.spatial import distance
     import torch
     from tqdm import tqdm
+
+    # Comment out this line to disable dark mode
+    plt.style.use("./themes/dark.mplstyle")
+
     if not os.path.exists(f"predictions"):
         os.makedirs(f"predictions", exist_ok=True)
 
@@ -184,7 +188,7 @@ def main():
                 + str(args.model)
                 + "\n"
             )
-        if (args.path.startswith("/")):
+        if (args.path.startswith("/") or args.path[1] == ":"):
             print(
                 "Directory where images are located:\n"
                 + str(args.path)
