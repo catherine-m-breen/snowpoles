@@ -16,7 +16,7 @@ import torch
 import cv2
 import pandas as pd
 import numpy as np
-import tomllib
+import tomli as tomllib
 import utils
 from torch.utils.data import Dataset, DataLoader
 import IPython
@@ -30,6 +30,7 @@ import albumentations as A ### better for keypoint augmentations, pip install al
 from torchvision.transforms import Compose, Resize, ToTensor
 from sklearn.model_selection import train_test_split
 import os
+from pathlib import Path
 
 
 # Load config from config.toml
@@ -73,10 +74,10 @@ def train_test_split(csv_path, image_path):
     ].reset_index()
 
     # save labels to output folder
-    if not os.path.exists(f"{config["paths"]["models_output"]}"):
-        os.makedirs(f"{config["paths"]["models_output"]}", exist_ok=True)
-    training_samples.to_csv(f"{config["paths"]["models_output"]}/training_samples.csv")
-    valid_samples.to_csv(f"{config["paths"]["models_output"]}/valid_samples.csv")
+    if not os.path.exists(f"{config['paths']['models_output']}"):
+        os.makedirs(f"{config['paths']['models_output']}", exist_ok=True)
+    training_samples.to_csv(f"{config['paths']['models_output']}/training_samples.csv")
+    valid_samples.to_csv(f"{config['paths']['models_output']}/valid_samples.csv")
 
     print(f'# of examples we will now train on {len(training_samples)}, val on {len(valid_samples)}')
 
@@ -114,9 +115,8 @@ class snowPoleDataset(Dataset):
         return filename
     
     def __getitem__(self, index):
-        cameraID = self.data.iloc[index]["filename"].split("_")[
-            0
-        ]  ## may need to update this. *Yeah, you think?* -Nesitive
+        #IPython.embed()
+        cameraID = self.data.iloc[index]["filename"].split("_")[0]  
         filename = self.data.iloc[index]["filename"]
 
         image = cv2.imread(parents[self.data.iloc[index]["filename"]])
@@ -154,27 +154,27 @@ class snowPoleDataset(Dataset):
 
 # get the training and validation data samples
 training_samples, valid_samples = train_test_split(
-    f"{config["paths"]["input_images"]}/labels.csv", config["paths"]["input_images"]
+    f"{config['paths']['input_images']}/labels.csv", config['paths']['input_images']
 )
 
 # initialize the dataset - `snowPoleDataset()`
 train_data = snowPoleDataset(
     training_samples,
-    f"{config["paths"]["input_images"]}",
-    aug=config["training"]["aug"],
+    f"{config['paths']['input_images']}",
+    aug=config['training']['aug'],
 )  ## we want all folders
 
 valid_data = snowPoleDataset(
-    valid_samples, f"{config["paths"]["input_images"]}", aug=False
+    valid_samples, f"{config['paths']['input_images']}", aug=False
 )  # we always want the transform to be the normal transform
 
 # prepare data loaders
 train_loader = DataLoader(
-    train_data, batch_size=config["training"]["batch_size"], shuffle=True, num_workers=0
+    train_data, batch_size=config['training']['batch_size'], shuffle=True, num_workers=0
 )
 valid_loader = DataLoader(
     valid_data,
-    batch_size=config["training"]["batch_size"],
+    batch_size=config['training']['batch_size'],
     shuffle=False,
     num_workers=0,
 )

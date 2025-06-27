@@ -30,7 +30,8 @@ import os
 import datetime
 import numpy as np
 from pathlib import Path
-import tomllib
+import tomli as tomllib
+import IPython
 
 def main():
 
@@ -156,22 +157,23 @@ def main():
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
 
-        if not len(prev_cameraID) or cameraID != prev_cameraID:
-            prev_cameraID = cameraID
-            mj = int(j / subset_to_label)
-            PixelLength = math.dist(
-                (float(topX[mj]), float(topY[mj])),
-                (float(bottomX[mj]), float(bottomY[mj])),
-            )
-            ## with the first photo, we will get some metadata
-            conversion = pole_length / PixelLength
-            ## and get metadata
-            first_pole_pixel_length.append(PixelLength)
-            conversions.append(conversion)
-            pole_lengths.append(pole_length)
-            img = cv2.imread(file)
-            width, height, channel = img.shape
-            heights.append(height), widths.append(width)
+        # if not len(prev_cameraID) or cameraID != prev_cameraID:
+        #     prev_cameraID = cameraID
+        #     mj = int(j / subset_to_label)
+        #     IPython.embed()
+        #     PixelLength = math.dist(
+        #         (float(topX[mj]), float(topY[mj])),
+        #         (float(bottomX[mj]), float(bottomY[mj])),
+        #     )
+        #     ## with the first photo, we will get some metadata
+        #     conversion = pole_length / PixelLength
+        #     ## and get metadata
+        #     first_pole_pixel_length.append(PixelLength)
+        #     conversions.append(conversion)
+        #     pole_lengths.append(pole_length)
+        #     img = cv2.imread(file)
+        #     width, height, channel = img.shape
+        #     heights.append(height), widths.append(width)
 
         ##whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
@@ -210,11 +212,11 @@ def main():
     metadata = pd.DataFrame(
         {
             "camera_id": pd.unique(cameraIDs),
-            "pole_length_cm": pole_lengths,
-            "pole_length_px": first_pole_pixel_length,
-            "pixel_cm_conversion": conversions,
-            "width": widths,
-            "height": heights,
+           "first_pole_length_px": first_pole_pixel_length,
+           "pole_length_cm": pole_lengths,
+           "pixel_cm_conversion": conversions,
+           "width": widths,
+           "height": heights,
         }
     )
 

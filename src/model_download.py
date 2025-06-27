@@ -1,7 +1,7 @@
 import argparse
 import os
 import subprocess
-import tomllib
+import tomli as tomllib
 
 
 def download_models(save_path="./models", save_name="CO_and_WA_model.pth"):

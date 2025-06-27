@@ -16,7 +16,7 @@ python src/train.py
 
 # Import startup libraries
 import argparse
-import tomllib
+import tomli as tomllib
 import os
 
 # Argument parser
@@ -137,39 +137,8 @@ from pathlib import Path
 from model_download import download_models
 from dataset import train_data, train_loader, valid_data, valid_loader
 
-<<<<<<< HEAD
 matplotlib.style.use('ggplot')
 # start_time = time.time() 
-=======
-matplotlib.style.use("ggplot")
-# start_time = time.time()
-
-
-def download_models():
-    """
-    see the Zenodo page for the latest models
-    """
-    root = os.getcwd()
-    save_path = f"{root}/models" ## switched this
-    if not os.path.exists(save_path):
-        os.makedirs(save_path, exist_ok=True)
-    url = "https://zenodo.org/records/12764696/files/CO_and_WA_model.pth"
-
-    # download if does not exist
-    model_path = Path(save_path) / "CO_and_WA_model.pth"
-    if not model_path.exists():
-    
-        ## wget_command = f"wget {url} -P {save_path}" ## this is linux
-        save_path = save_path.replace("\\", "/")
-        output_file = os.path.join(save_path, url.split("/")[-1]).replace("\\", "/")
-        curl_command = f'curl -L --ssl-no-revoke "{url}" -o "{output_file}"'
-        print(curl_command)
-        os.system(curl_command)
-        return print("\n models download! \n")
-    else:
-        return print("model already saved")
-
->>>>>>> 169e67f (fixed model save so that it doesnt redownload every time and added a line to save an example image every 5 epochs)
 
 ## create output path
 if not os.path.exists(f"{args.output}"):
@@ -179,7 +148,7 @@ if not os.path.exists(f"{args.output}"):
 # model
 model = snowPoleResNet50(pretrained=True, requires_grad=True).to(args.device)
 
-torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
+#torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
 checkpoint = torch.load(args.model, map_location=torch.device(args.device))
 model.load_state_dict(checkpoint["model_state_dict"])
 print("fine-tuned model loaded...")
@@ -191,11 +160,12 @@ criterion = nn.SmoothL1Loss()
 # training function
 def fit(model, dataloader, data):
 
-    print("Training")
-    model.to(args.device)  ##
+    # print("Training")
+    # model.to(args.device)  ##
 
+    #.embed()
     print('Training')
-    model.to(config.DEVICE) ##
+    model.to(config['training']['device']) ##
 
     model.train()
     train_running_loss = 0.0
@@ -250,14 +220,9 @@ def validate(model, dataloader, data, epoch):
             if not os.path.exists(args.output):
                 os.makedirs(args.output, exist_ok=True)
             if (
-<<<<<<< HEAD
                 epoch + 1
             ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
 
-=======
-                epoch
-            ) % 5 == 0:  # make this not 0 to get a different image
->>>>>>> 169e67f (fixed model save so that it doesnt redownload every time and added a line to save an example image every 5 epochs)
                 utils.valid_keypoints_plot(image, outputs, keypoints, epoch)
         
     valid_loss = valid_running_loss/counter
@@ -317,8 +282,6 @@ torch.save(
     },
     f"{args.output}/model.pth",
 )  ### the last model
-
-
 print("DONE TRAINING")
 
 # print("My program took", time.time() - start_time, "to run")

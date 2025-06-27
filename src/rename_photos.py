@@ -11,7 +11,7 @@ import glob
 import tqdm
 import argparse
 from pathlib import Path
-import tomllib
+import tomli as tomllib
 import os
 
 

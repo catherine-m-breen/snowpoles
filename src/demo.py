@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 import os
 import IPython
+from pathlib import Path
 
 def download_models(): 
     '''
@@ -34,9 +35,12 @@ def download_models():
     url = 'https://zenodo.org/records/12764696/files/CO_and_WA_model.pth'
     
     # download if does not exist  
-    if not os.path.exists(f'{save_path}/CO_and_WA_model.pth'):
+    if not os.path.exists(f'{save_path}\CO_and_WA_model.pth'):
         wget_command = f'wget {url} -P {save_path}'
-        os.system(wget_command)
+        output_file = os.path.join(save_path, url.split("/")[-1]).replace("\\","/")
+        curl_command = f'curl -L --ssl-no-revoke "{url}" -o "{output_file}"'
+        print(curl_command)
+        os.system(curl_command)
         return print('\n models download! \n')
     else:
         return print('model already saved')
@@ -50,7 +54,7 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0,255,0), diameter=15
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## top
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
-    plt.savefig(f"demo_predictions/pred_{file}.png")
+    plt.savefig(os.path.join("demo_predictions", f"pred_{file}.png"))
     plt.close()
 
 def load_model(device):
@@ -78,9 +82,21 @@ def predict(model, device): ##
     total_length_pixels = []
     snow_depths = []
   
-    snowpolefiles = glob.glob(f"example_data/**/*")
-    ## full length of poles in cm
-    metadata = pd.read_csv(f"example_data/pole_metadata.csv")
+    # snowpolefiles = glob.glob(f"example_data/**/*")
+    # ## full length of poles in cm
+    # metadata = pd.read_csv(f"example_data/pole_metadata.csv")
+
+    # Define base path 
+    #IPython.embed()
+    root =  Path(os.getcwd())
+    base_path =  Path("example_data")
+    full_path = root.joinpath(base_path)
+
+    # Get all files recursively
+    snowpolefiles = list(full_path.rglob("*.jpg"))
+
+    # Read metadata
+    metadata = pd.read_csv(full_path / "pole_metadata.csv")
     
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
@@ -92,7 +108,7 @@ def predict(model, device): ##
             image = image / 255.0   
 
             # again reshape to add grayscale channel format
-            filename = file.split('/')[-1]
+            filename = Path(file).name
             Camera = filename.split('_')[0]
             
             ## add an empty dimension for sample size
