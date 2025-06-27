@@ -28,7 +28,7 @@ class ModelDownloadTest(unittest.TestCase):
     def test_download_path(self):
         with patch("builtins.print") as mock_print:
             with patch("builtins.input", return_value="y") as mock_input:
-                model_download.download_models("models/", "nondefault_path.pth")
+                model_download.download_models("models/", "nondefault_path.pth", url="https://zenodo.org/records/12764696/files/not_CO_and_WA_model.pth")
         self.assertTrue(os.path.exists("models/nondefault_path.pth"), "Non-default output location is not respected")
 
     def tearDown(self):
