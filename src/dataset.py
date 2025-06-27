@@ -55,7 +55,7 @@ def sample_every_x(group, x):
     return group[1].iloc[selected_indices]
 
 
-def train_test_split(csv_path, image_path):
+def train_test_split(csv_path, image_path, models_output):
 
     df_data = pd.read_csv(csv_path)
     print(f"all rows in df_data {len(df_data.index)}")
@@ -80,10 +80,10 @@ def train_test_split(csv_path, image_path):
     ].reset_index()
 
     # save labels to output folder
-    if not os.path.exists(f"{config["paths"]["models_output"]}"):
-        os.makedirs(f"{config["paths"]["models_output"]}", exist_ok=True)
-    training_samples.to_csv(f"{config["paths"]["models_output"]}/training_samples.csv")
-    valid_samples.to_csv(f"{config["paths"]["models_output"]}/valid_samples.csv")
+    if not os.path.exists(f"{models_output}"):
+        os.makedirs(f"{models_output}", exist_ok=True)
+    training_samples.to_csv(f"{models_output}/training_samples.csv")
+    valid_samples.to_csv(f"{models_output}/valid_samples.csv")
 
     print(
         f"# of examples we will now train on {len(training_samples)}, val on {len(valid_samples)}"
@@ -183,10 +183,10 @@ class snowPoleDataset(Dataset):
             "filename": filename,
         }
 
-def prepare_dataset(input_images, aug, batch_size):
+def prepare_dataset(input_images, aug, batch_size, models_output):
     # get the training and validation data samples
     training_samples, valid_samples = train_test_split(
-        f"{input_images}/labels.csv", input_images
+        f"{input_images}/labels.csv", input_images, models_output
     )
 
     # initialize the dataset - `snowPoleDataset()`

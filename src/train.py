@@ -132,14 +132,13 @@ def train(output, device, model_arg, lr, epochs):
     import matplotlib.pyplot as plt
     import torch.nn as nn
     import matplotlib
-    import utils
+    from utils import valid_keypoints_plot
     from model import snowPoleResNet50
     from tqdm import tqdm
     import IPython
     import numpy as np
     from pathlib import Path
     import os
-    from model_download import download_models
     from dataset import prepare_dataset
 
     matplotlib.style.use('ggplot')
@@ -165,7 +164,7 @@ def train(output, device, model_arg, lr, epochs):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.SmoothL1Loss()
 
-    prepared_dataset = prepare_dataset("tests/data", True, 4)
+    prepared_dataset = prepare_dataset("tests/data", True, 4, output)
     train_loader = prepared_dataset["train_loader"]
     train_data = prepared_dataset["train_data"]
     valid_loader = prepared_dataset["valid_loader"]
@@ -286,7 +285,7 @@ def validate(model, dataloader, data, epoch, device, output, criterion):
             if (
                 epoch + 1
             ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
-                utils.valid_keypoints_plot(image, outputs, keypoints, epoch)
+                valid_keypoints_plot(image, outputs, keypoints, epoch, output)
         
     valid_loss = valid_running_loss/counter
     return valid_loss

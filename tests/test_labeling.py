@@ -21,6 +21,8 @@ class LabelingTest(unittest.TestCase):
         copyfile("tests/data/test-labels.csv", "tests/data/labels.csv")
         copyfile("tests/data/test-pole_metadata.csv", "tests/data/pole_metadata.csv")
         labeling.label_photos("tests/data", 150, 6)
+        copyfile("tests/data/labels.csv", "tests/data/labels-new.csv")
+        copyfile("tests/data/pole_metadata.csv", "tests/data/pole_metadata-new.csv")
         self.assertTrue(
             filecmp.cmp("tests/data/labels.csv", "tests/data/test-labels.csv")
         )
