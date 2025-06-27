@@ -238,7 +238,7 @@ def fit(model, dataloader, data, device, optimizer, criterion):
     counter = 0
     # calculate the number of batches
     num_batches = int(len(data) / dataloader.batch_size)
-    for i, data in tqdm(enumerate(dataloader), total=num_batches):
+    for i, data in tqdm.tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
         image, keypoints = data["image"].to(device), data["keypoints"].to(
             device
