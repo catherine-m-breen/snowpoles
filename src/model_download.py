@@ -1,7 +1,6 @@
 import argparse
 import os
 import subprocess
-import sys
 import tomllib
 
 # Argument parser for command-line arguments:
@@ -19,9 +18,6 @@ def main():
     download_models()
 
 def download_models(save_path="./models", save_name="CO_and_WA_model.pth", confirm=True):
-
-    sys.exit(2)
-    
     # see the Zenodo page for the latest models
     root = os.getcwd()
     if not os.path.exists(save_path):
