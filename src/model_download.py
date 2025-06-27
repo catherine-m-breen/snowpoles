@@ -17,12 +17,11 @@ def main():
 
     download_models()
 
-def download_models(save_path="./models", save_name="CO_and_WA_model.pth", confirm=True):
+def download_models(save_path="./models", save_name="CO_and_WA_model.pth", confirm=True, url="https://zenodo.org/records/12764696/files/CO_and_WA_model.pth"):
     # see the Zenodo page for the latest models
     root = os.getcwd()
     if not os.path.exists(save_path):
         os.makedirs(save_path, exist_ok=True)
-    url = "https://zenodo.org/records/12764696/files/CO_and_WA_model.pth"
 
     # download if model does not exist
     if not os.path.exists(f"{save_path + "/" + save_name}"):
