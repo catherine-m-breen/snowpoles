@@ -70,7 +70,8 @@ def train_test_split(csv_path, image_path, models_output):
     global parents
     parents = {}
     for i in all_images:
-        parents[str(i).split("/")[-1]] = str(i)
+        ifixed = str(i).replace("\\", "/") # Just switch to EXT4 already, Microsoft. Make it so I don't have to do this. -Nesitive
+        parents[ifixed.split("/")[-1]] = ifixed
     filenames = [img.name for img in all_images]
     valid_samples = valid_samples[
         valid_samples["filename"].isin(filenames)
