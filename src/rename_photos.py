@@ -64,8 +64,10 @@ def main():
             else:
                 print("Invalid input.\n")
             quit()
+    rename_photos(args.path)
 
-    files = list(Path(args.path).rglob("*"))  # recursively grab all files
+def rename_photos(path):
+    files = list(Path(path).rglob("*"))  # recursively grab all files
 
     for file in tqdm.tqdm(files):
         try:
@@ -84,7 +86,6 @@ def main():
         except Exception as e:
             print(f"{e} {file}")
             continue
-
 
 if __name__ == "__main__":
     main()

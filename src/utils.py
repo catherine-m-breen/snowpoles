@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import config
 import IPython
 import cv2 
 import argparse
@@ -14,7 +13,7 @@ from PIL import ExifTags
 # Comment out this line to disable dark mode
 plt.style.use("./themes/dark.mplstyle")
 
-def valid_keypoints_plot(image, outputs, orig_keypoints, epoch):
+def valid_keypoints_plot(image, outputs, orig_keypoints, epoch, output_path):
     """
     This function plots the regressed (predicted) keypoints and the actual 
     keypoints after each validation epoch for one image in the batch.
@@ -40,7 +39,7 @@ def valid_keypoints_plot(image, outputs, orig_keypoints, epoch):
         else:
             plt.plot(output_keypoint[p, 0], output_keypoint[p, 1], 'r.') ## bottom
             plt.plot(orig_keypoint[p, 0], orig_keypoint[p, 1], 'b.')
-    plt.savefig(f"{config.OUTPUT_PATH}/val_epoch_{epoch}.png")
+    plt.savefig(f"{output_path}/val_epoch_{epoch}.png")
     plt.close()
 
 
