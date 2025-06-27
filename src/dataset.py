@@ -64,7 +64,7 @@ def train_test_split(csv_path, image_path):
     global parents
     parents = {}
     for i in all_images:
-        parents[str(i).split("/")[-1]] = str(i)
+        parents[i.name] = str(i)
     filenames = [img.name for img in all_images]
     valid_samples = valid_samples[
         valid_samples["filename"].isin(filenames)
