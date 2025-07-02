@@ -37,7 +37,7 @@ parser.add_argument(
     "--epochs", required=False, help="epochs"
 )
 parser.add_argument(
-    "--lr", required=False, help="please let us know what this setting does; we've been afraid to try it"
+    "--lr", required=False, help="the learning rate of the model"
 )
 parser.add_argument(
     "--no_confirm", required=False, help="skip confirmation", action="store_true"

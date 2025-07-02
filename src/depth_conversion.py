@@ -13,30 +13,92 @@ python src/depth_conversion.py --predictions_path '/predictions/results.csv' --m
 
 
 import numpy as np
-from model import snowPoleResNet50
+import tomli as tomllib
+import os
 import argparse
 import pandas as pd
 from tqdm import tqdm
 from scipy.spatial import distance
+import IPython
+from pathlib import Path
 
 def main():
-    # Argument parser for command-line arguments:
-    parser = argparse.ArgumentParser(description='Predict top and bottom coordinates.')
-    parser.add_argument('--predictions_path', required=True, help='Path to camera image directory', default = '/predictions/results.csv')
-    parser.add_argument('--metadata', required=False, help='Path to pole metadata', default = "/example_data/pole_metadata.csv")
-    parser.add_argument('')
+    parser = argparse.ArgumentParser(description="Convert pixel lengths into snow depth")
+    parser.add_argument("--path", help="directory where images/metadata are located")
+    parser.add_argument(
+        "--output", required=False, help="directory in which to store marked images"
+    )
+    parser.add_argument(
+        "--no_confirm", required=False, help="skip confirmation", action="store_true"
+    )
+    global args
     args = parser.parse_args()
 
-    predictions = pd.read_csv(f'{args.predictions_path}')
-    metadata = pd.read_csv(f"{args.metadata}")
+    # Get arguments from config file if they weren't specified
+    with open("config.toml", "rb") as configfile:
+        config = tomllib.load(configfile)
+    if not args.path:
+        args.path = config["paths"]["input_images"]
+    if not args.output:
+        args.output = config["paths"]["images_output"]
+
+    # Confirmation
+    if not args.no_confirm:
+        print(
+            "\n\n# The following options were specified in config.toml or as arguments:\n"
+        )
+        if (args.path.startswith("/")):
+            print(
+                "Directory where images/metadata are located:\n"
+                + str(args.path)
+                + "\n"
+            )
+        else:
+            print(
+                "Directory where images/metadata are located:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.path)
+                + "\n"
+            )
+        if (args.output.startswith("/")):
+            print(
+                "Directory where results with snow depth will be stored:\n"
+                + str(args.output)
+                + "\n"
+            )
+        else:
+            print(
+                "Directory where results with snow depth will be stored:\n"
+                + os.getcwd()
+                + "/"
+                + str(args.output)
+                + "\n"
+            )
+
+        confirmation = str(input("\nIs this OK? (y/n) "))
+        if confirmation.lower() != "y":
+            if confirmation.lower() == "n":
+                print(
+                    "\nEdit the config file, located at",
+                    os.getcwd()
+                    + "/config.toml, to your liking, or edit the command line arguments if they were specified, and then re-run this file.\n",
+                )
+            else:
+                print("Invalid input.\n")
+            quit()
+
+
+    predictions = pd.read_csv(f'{args.output}/results.csv')
+    metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
 
     files = []
     cameras =[]
     snow_depths = []
 
-    for filename in predictions['filename']:
+    for filename in tqdm(predictions['filename']):
         try: 
-            camera = filename.split('/')[-1]
+            camera = Path(predictions['filename'][0]).name.split('_')[0]
         
             full_length_pole_cm = metadata.loc[metadata['camera_id'] == camera, 'pole_length_cm'].iloc[0]
             pixel_cm_conversion = metadata.loc[metadata['camera_id'] == camera, 'pixel_cm_conversion'].iloc[0]
@@ -56,8 +118,11 @@ def main():
 
         except: pass
 
+
     df = pd.DataFrame({'camera_id': cameras, 'filename': files, 'snowdepth':snow_depths})
-    df.to_csv(f'{args.predictions_path}/results_wsnowdepthcm.csv')
+    df.to_csv(f'{args.output}/results_wsnowdepthcm.csv')
+
+    print(f'saved at {args.output}/results_wsnowdepthcm.csv')
 
 if __name__ == '__main__':
     main()

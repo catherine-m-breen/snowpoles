@@ -10,6 +10,103 @@ python src/evaluate.py
 
 '''
 
+# Import startup libraries
+import argparse
+import tomli as tomllib
+import os
+
+# Argument parser
+parser = argparse.ArgumentParser(description="Evaluate model on the train/val images")
+parser.add_argument(
+    "--model",
+    required=False,
+    help='model to train, default is "models/CO_and_WA_model.pth"',
+)
+parser.add_argument("--path", help="directory where images are located")
+parser.add_argument(
+    "--device", required=False, help='device to use for training ("cpu" or "cuda")'
+)
+parser.add_argument(
+    "--output", required=False, help="directory in which to store eval results"
+)
+parser.add_argument(
+    "--no_confirm", required=False, help="skip confirmation", action="store_true"
+)
+args = parser.parse_args()
+
+# Get arguments from config file if they weren't specified
+with open("config.toml", "rb") as configfile:
+    config = tomllib.load(configfile)
+if not args.model:
+    args.model = config["paths"]["trained_model"]
+if not args.path:
+    args.path = config["paths"]["input_images"]
+if not args.device:
+    args.device = config["training"]["device"]
+if not args.output:
+    args.output = config["paths"]["models_output"]
+
+# Confirmation
+if not args.no_confirm:
+    print(
+        "\n\n# The following options were specified in config.toml or as arguments:\n"
+    )
+    if (args.model.startswith("/")):
+        print(
+            "Model to evaluate:\n"
+            + str(args.model)
+            + "\n"
+        )
+    else:
+        print(
+            "Model to evaluate:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.model)
+            + "\n"
+        )
+    if (args.path.startswith("/")):
+        print(
+            "Directory where images are located:\n"
+            + str(args.path)
+            + "\n"
+        )
+    else:
+        print(
+            "Directory where images are located:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.path)
+            + "\n"
+        )
+    print("Device to use:\n" + args.device + "\n")
+    if (args.output.startswith("/")):
+        print(
+            "Directory where evaluation results will be stored:\n"
+            + str(args.output)
+            + "\n"
+        )
+    else:
+        print(
+            "Directory where evaluation results will be stored:\n"
+            + os.getcwd()
+            + "/"
+            + str(args.output)
+            + "\n"
+        )
+    confirmation = str(input("\nIs this OK? (y/n) "))
+    if confirmation.lower() != "y":
+        if confirmation.lower() == "n":
+            print(
+                "\nEdit the config file, located at",
+                os.getcwd()
+                + "/config.toml, to your liking, or edit the command line arguments if they were specified, and then re-run this file.\n",
+            )
+        else:
+            print("Invalid input.\n")
+        quit()
+
+
 import torch
 import numpy as np
 import config
@@ -24,10 +121,10 @@ import os
 import matplotlib.pyplot as plt
 
 def load_model():
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(config.DEVICE)
+    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
     # load the model checkpoint
-    checkpoint = torch.load(config.OUTPUT_PATH + '/model.pth')
-    print(f"loading model from the following path: {config.OUTPUT_PATH}")
+    checkpoint = torch.load(args.model, map_location=torch.device(args.device))
+    print(f"loading model from the following path: {args.model}")
     # load model weights state_dict
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
@@ -36,8 +133,8 @@ def load_model():
 
 def predict(model, data, eval='eval'): 
 
-    if not os.path.exists(f"{config.OUTPUT_PATH}/{eval}"):
-        os.makedirs(f"{config.OUTPUT_PATH}/{eval}", exist_ok=True)
+    if not os.path.exists(f"{args.output}/{eval}"):
+        os.makedirs(f"{args.output}/{eval}", exist_ok=True)
 
     output_list = []
     Cameras, filenames = [], []
@@ -56,7 +153,7 @@ def predict(model, data, eval='eval'):
 
     with torch.no_grad():
         for i, data in tqdm(enumerate(data)): 
-            image, keypoints = data['image'].to(config.DEVICE), data['keypoints'].to(config.DEVICE)
+            image, keypoints = data['image'].to(args.device), data['keypoints'].to(config.DEVICE)
             filename = data['filename']
             Camera = filename.split('_')[0]
 
@@ -76,7 +173,7 @@ def predict(model, data, eval='eval'):
             filenames.append(filename)
             x1s_true.append(x1_true), y1s_true.append(y1_true), x2s_true.append(x2_true), y2s_true.append(y2_true)
             x1s_pred.append(x1_pred), y1s_pred.append(y1_pred), x2s_pred.append(x2_pred), y2s_pred.append(y2_pred)
-
+            
             ## outputs proj and in cm
             total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
             full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length_cm'].values[0]
@@ -110,6 +207,7 @@ def predict(model, data, eval='eval'):
             'bottom_pixel_error': bottom_pixel_errors, 'total_length_pixel': total_length_pixels, 'total_length_pixel_actual': total_length_pixel_actuals,
             'automated_depth':automated_sds,'manual_snowdepth':manual_sds,'difference':diff_sds, 'mape':mape_errors,'mape_sd':mape_errors_sd})
 
+    results.to_csv(f"{args.output}/{eval}/indiv_img_eval_results.csv")
     #### overall average
     print('Overall Top Pixel Error')
     print(f"{np.mean(top_pixel_errors)} +/- {np.std(top_pixel_errors)} \n")
@@ -123,13 +221,41 @@ def predict(model, data, eval='eval'):
     print(f"{np.mean(mape_errors_sd)} +/- {np.std(mape_errors_sd)} \n")
     print("\n")
 
-    results.to_csv(f"{config.OUTPUT_PATH}/{eval}/evaluation_results.csv")
+    stats_data = {'Metric': [
+            'Top Pixel Error',
+            'Bottom Pixel Error',
+            'Mean Average Percent Error (MAPE)',
+            'Difference in cm',
+            'Difference in MAPE'
+        ],
+        'Mean': [
+            np.mean(top_pixel_errors),
+            np.mean(bottom_pixel_errors),
+            np.mean(mape_errors),
+            np.mean(diff_sds),
+            np.mean(mape_errors_sd)
+        ],
+        'Standard_Deviation': [
+            np.std(top_pixel_errors),
+            np.std(bottom_pixel_errors),
+            np.std(mape_errors),
+            np.std(diff_sds),
+            np.std(mape_errors_sd)
+        ]
+    }
+
+    # Create DataFrame
+    df = pd.DataFrame(stats_data)
+
+    # Save to CSV
+    df.to_csv(f"{args.output}/{eval}/overall_statistics.csv", index=False)
+
     return results
 
 def main():
     model = load_model()
     print('results on valid data\n')
-    outputs = predict(model, valid_data, eval='wa')
+    outputs = predict(model, valid_data)
 
 if __name__ == '__main__':
     main()

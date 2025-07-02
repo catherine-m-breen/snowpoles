@@ -157,7 +157,7 @@ def main():
         cameraID = Path(file).parent.name
         cameraIDs.append(cameraID)
 
-        ##whether to start counter over
+        # whether to start counter over
         i = i if len(cameraIDs) == 1 or cameraID == cameraIDs[-2] else 0
 
         if Path(file).name in filename:

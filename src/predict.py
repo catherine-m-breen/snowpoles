@@ -17,9 +17,20 @@ python src/predict.py --model_path './output1/model.pth' --img_dir './nontrained
 
 # Import startup libraries
 import argparse
-import tomllib
 import os
+import tomli as tomllib
 from pathlib import Path
+
+# for predict
+import cv2
+import glob
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy.spatial import distance
+import torch
+from tqdm import tqdm
+import IPython
 
 def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
     import matplotlib.pyplot as plt
@@ -41,21 +52,13 @@ def load_model(args):
 
     model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
     # load the model checkpoint
-    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
+    #torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
     checkpoint = torch.load(args.model, map_location=torch.device(args.device))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model
 
-def predict(model, args, device):  ##
-    import cv2
-    import glob
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
-    from scipy.spatial import distance
-    import torch
-    from tqdm import tqdm
+def predict(model, args, device):  
     if not os.path.exists(f"predictions"):
         os.makedirs(f"predictions", exist_ok=True)
 
@@ -65,7 +68,9 @@ def predict(model, args, device):  ##
     snow_depths = []
 
     ## folder or directory
-    snowpolefiles = glob.glob(f"{args.path}/**/*")
+    #IPython.embed()
+    #snowpolefiles = glob.glob(f"{args.path}/**/*")
+    snowpolefiles = list(Path(args.path).rglob("*.jpg"))
 
     metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
 
@@ -79,8 +84,11 @@ def predict(model, args, device):  ##
             image = image / 255.0   
 
             # again reshape to add grayscale channel format
-            filename = file.split('/')[-1]
-            Camera = filename.split('/')[-1] ## assumes in a folder with camera name ('cam1', 'cam2', etc)
+            file_path = Path(file)
+            filename = file_path.name
+            Camera = file_path.stem.split('_')[0]
+            #filename = file.split('/')[-1]
+            #Camera = filename.split('/')[-1] ## assumes in a folder with camera name ('cam1', 'cam2', etc)
             
             ## add an empty dimension for sample size
             image = np.transpose(image, (2, 0, 1)) ## 
@@ -105,7 +113,7 @@ def predict(model, args, device):  ##
             pred_keypoint[1] = pred_keypoint[1] * (h / 224)
             pred_keypoint[3] = pred_keypoint[3] * (h /224)
 
-            vis_predicted_keypoints(filename, image, pred_keypoint,) 
+            if i % 10 == 0: vis_predicted_keypoints(filename, image, pred_keypoint,) 
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
             
             Cameras.append(Camera)
