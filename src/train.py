@@ -221,8 +221,7 @@ def validate(model, dataloader, data, epoch):
                 os.makedirs(args.output, exist_ok=True)
             if (
                 epoch + 1
-            ) % 1 == 0 and i == 20:  # make this not 0 to get a different image
-
+            ) % 1 == 0 or i == 20:  # make this not 0 to get a different image
                 utils.valid_keypoints_plot(image, outputs, keypoints, epoch)
         
     valid_loss = valid_running_loss/counter
