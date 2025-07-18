@@ -155,7 +155,8 @@ def predict(model, data, eval='eval'):
         for i, data in tqdm(enumerate(data)): 
             image, keypoints = data['image'].to(args.device), data['keypoints'].to(config.DEVICE)
             filename = data['filename']
-            Camera = filename.split('_')[0]
+            Camera = filename.split('_W')[0]
+            #Camera = "_".join(filename.split("_")[:2])
 
             # flatten the keypoints
             keypoints = keypoints.detach().cpu().numpy().reshape(-1,2)
@@ -176,10 +177,14 @@ def predict(model, data, eval='eval'):
             
             ## outputs proj and in cm
             total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
-            full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length_cm'].values[0]
-            pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
-            automated_sd = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
+            try: 
+                full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length_cm'].values[0]
+                pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
+                automated_sd = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
             
+            except Exception: 
+                print(Camera)
+                IPython.embed()
             automated_sds.append(automated_sd)
 
             # ## difference between automated and manual

@@ -21,6 +21,8 @@ FT_PATH = config['paths']['trainee_model']
 metadata = f"{ROOT_PATH}/pole_metadata.csv"
 labels = f"{ROOT_PATH}/labels.csv"
 
+predictions_output = config['paths']['images_output']
+
 keypointColumns = ['x1', 'y1', 'x2', 'y2'] ## update
 
 if not os.path.exists(FT_PATH):

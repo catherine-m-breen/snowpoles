@@ -11,7 +11,7 @@ Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR03
 
 
 '''
-
+import colorsys
 import torch
 import cv2
 import pandas as pd
@@ -42,6 +42,30 @@ with open("config.toml", "rb") as configfile:
     config = tomllib.load(configfile)
 
 
+def apply_filter(image):
+    # width, height, __ = image.shape
+    # for y in range(height):
+    #     for x in range(width):
+    #         pixel = list(colorsys.rgb_to_hsv(*image[x, y]))
+    #         if (pixel[0] < 0.833):
+    #             image[x, y] = (0, 0, 0)
+    #             continue
+    #         pixel[1] = 1
+    #         pixel[2] = 255
+    #         rgb = colorsys.hsv_to_rgb(*pixel)
+    #         image[x, y] = (round(rgb[0]), round(rgb[1]), round(rgb[2]))
+    image_rgb = image[:, :, ::-1]
+    image_hsv = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV)
+    mask = image_hsv[:, :, 0] < 149
+    image_rgb[mask] = [0,0,0]
+    image_hsv[~mask, 1] = 255
+    image_hsv[~mask, 2] = 255
+    valid_pixels = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2RGB)
+    image_rgb[~mask] = valid_pixels[~mask]
+
+    return image_rgb[:, :, ::-1]
+
+    
 
 # Define a function to sample every third photo
 ## Only used for experiments 
@@ -61,6 +85,7 @@ def train_test_split(csv_path, image_path):
 
     ## check to make sure we only use images that exist
     all_images = list(Path(image_path).rglob("*.JPG"))
+    
     global parents
     parents = {}
     for i in all_images:
@@ -125,9 +150,18 @@ class snowPoleDataset(Dataset):
         
         # resize the image into `resize` defined above
         image = cv2.resize(image, (self.resize, self.resize))
-        image = image / 255.0
+        #IPython.embed()
+        if config['training']['filter']: 
+            image = apply_filter(image)
+            if index % 100: 
+                cv2.imwrite(f"{config['paths']['models_output']}/filtered_{filename}", image)
+        #image = image / 255.0
         # get the keypoints
         keypoints = self.data.iloc[index][1:][['x1','y1','x2','y2']]  #[3:7]  ### change to x1 y1 x2 y2
+        
+        # adonis neg values # 
+        keypoints = keypoints.clip(lower=0)
+
         keypoints = np.array(keypoints, dtype='float32')
         # reshape the keypoints
         keypoints = keypoints.reshape(-1, 2)
