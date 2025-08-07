@@ -25,6 +25,9 @@ import IPython
 from pathlib import Path
 
 ###################### UPDATE WITH OWN PATH HERE ###############
+payton_curr_csv = pd.read_csv('/Users/cmbreen/Documents/FDLTCC/payton_fix/results_location.csv')
+
+################################################################
 data = pd.read_csv(Path("C:/Users/SnowE/Documents/snowpoles-main/snowpoles-main/predictions/results.csv"))
 
 # helper function to split cameraIDs to site IDs if there is a year at the end. 
