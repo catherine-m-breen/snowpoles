@@ -62,7 +62,7 @@ def apply_filter(image):
     image_hsv[~mask, 2] = 255
     valid_pixels = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2RGB)
     image_rgb[~mask] = valid_pixels[~mask]
-
+    #print("filtered applied!")
     return image_rgb[:, :, ::-1]
 
     
@@ -147,6 +147,7 @@ class snowPoleDataset(Dataset):
         image = cv2.imread(parents[self.data.iloc[index]["filename"]])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         orig_h, orig_w, channel = image.shape
+        image = image / 255.0
         
         # resize the image into `resize` defined above
         image = cv2.resize(image, (self.resize, self.resize))
