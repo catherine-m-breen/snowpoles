@@ -106,7 +106,8 @@ class snowPoleDataset(Dataset):
         return {
             'image': torch.tensor(np.stack(images), dtype=torch.float),  # (seq_len, 3, 224, 224)
             'keypoints': torch.tensor(keypoints_list[-1], dtype=torch.float),  # Use last frame's keypoints
-            'filenames':filenames
+            'filenames':filenames, 
+            'index': index  # Add this line
         }
 
 

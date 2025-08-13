@@ -70,14 +70,14 @@ def predict(model, args, device):
     ## folder or directory
     #IPython.embed()
     #snowpolefiles = glob.glob(f"{args.path}/**/*")
-    snowpolefiles = list(Path(args.path).rglob("*.jpg"))
+    snowpolefiles = list(Path(args.path).rglob("*.JPG"))
 
     metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
 
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
     
-            image = cv2.imread(file)
+            image = cv2.imread(str(file))
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             h, w, *_ = image.shape
             image = cv2.resize(image, (224,224))

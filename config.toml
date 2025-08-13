@@ -24,18 +24,5 @@ epochs = 200 # Epochs
 aug = false # whether to augment the data or not 
 device = "cpu" # Device to use, either "cuda" or "cpu".
 batch_size = 8 # Batch size
-show_dataset_plot = True # Show dataset plot
+show_dataset_plot = false # Show dataset plot
 filter = false
-
-# LSTM-specific settings
-use_lstm = true # Whether to use LSTM model for sequence training
-sequence_length = 2 # Number of consecutive frames to use in LSTM sequences
-progressive_training = true # Use progressive training (LSTM first, then fine-tune CNN)
-lstm_hidden_size = 256 # Hidden size for LSTM layer
-lstm_num_layers = 1 # Number of LSTM layers
-lstm_lr = 0.001 # Learning rate for LSTM components (used in progressive training)
-cnn_lr = 0.00001 # Learning rate for CNN components during fine-tuning stage
-
-# Progressive training settings
-stage1_epochs = 100 # Number of epochs for Stage 1 (LSTM only) - will be calculated as percentage of total epochs if progressive_training = true
-unfreeze_layers = "last_block" # Which CNN layers to unfreeze in Stage 2: "all", "last_block", or "final_layer"

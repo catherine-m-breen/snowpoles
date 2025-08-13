@@ -111,39 +111,39 @@ def predict(model, config):
                 sequence_images.append(image)
 
             sequence_tensor = torch.stack(sequence_images)
-            ## add an empty dimension for sample size 
-            image = image.unsqueeze(0)
-            image = image.to(device)
+            sequence_tensor = sequence_tensor.unsqueeze(0)
+            sequence_tensor = sequence_tensor.to(device)
 
-            # again reshape to add grayscale channel format
-            file_path = Path(file)
-            filename = file_path.name
-            Camera = file_path.stem.split('_')[0]
-            #filename = file.split('/')[-1]
-            #Camera = filename.split('/')[-1] ## assumes in a folder with camera name ('cam1', 'cam2', etc)
-            
-
-            #######
-            # temp sequence info: 
-            #image = image.unsqueeze(1)  # Add seq_len=1 dimension
-            ######
-            outputs = model(image)
+            outputs = model(sequence_tensor)
             outputs = outputs.cpu().numpy() 
             pred_keypoint = np.array(outputs[0], dtype='float32')
 
-            image = image.squeeze()
-            image = image.cpu()
-            image = np.transpose(image, (1, 2, 0))
-            image = np.array(image, dtype='float32')
+            ######## 
+            last_file = sequence[-1]
+            original_image = cv2.imread(str(last_file))
+            original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+            h, w, *_ = original_image.shape
+            
+            file_path = Path(last_file)
+            filename = file_path.name
+            Camera = file_path.stem.split('_')[0]
+            #### do i need this? 
+            # image = np.transpose(image, (1, 2, 0))
+            # image = np.array(image, dtype='float32')
+            # image = cv2.resize(image, (w, h))
+            ########
 
             ## resize back up to original size and project predicted points onto original size
-            image = cv2.resize(image, (w, h))
             pred_keypoint[0] = pred_keypoint[0] * (w / 224)
             pred_keypoint[2] = pred_keypoint[2] * (w /224)
             pred_keypoint[1] = pred_keypoint[1] * (h / 224)
             pred_keypoint[3] = pred_keypoint[3] * (h /224)
 
-            if i % 10 == 0: vis_predicted_keypoints(config, filename, image, pred_keypoint,) 
+            if i % 20 == 0: ## save every 20
+                image = np.transpose(image, (1, 2, 0))
+                image = np.array(image, dtype='float32')
+                image = cv2.resize(image, (w, h))
+                vis_predicted_keypoints(config, filename, image, pred_keypoint,) 
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
             
             Cameras.append(Camera)

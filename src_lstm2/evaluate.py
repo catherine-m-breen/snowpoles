@@ -29,12 +29,16 @@ import matplotlib.pyplot as plt
 
 
 
-def load_model():
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
+def load_model(config):
+    model = snowPoleResNet50(pretrained=False, 
+                             hidden_size=256, 
+                             num_layers=2,     
+                             num_classes=4,   ## could adjust and predict more poles in the image i guess? 
+                             requires_grad=False).to(config['training']['device'])
     # load the model checkpoint
-    checkpoint = torch.load(args.model, map_location=torch.device(args.device))
-    print(f"loading model from the following path: {args.model}")
-    # load model weights state_dict
+    #torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
+    model_path = f"{config['paths']['models_output']}/model.pth"
+    checkpoint = torch.load(model_path, map_location=torch.device(config['training']['device']))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model

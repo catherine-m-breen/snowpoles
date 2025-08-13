@@ -22,6 +22,30 @@ import torch.optim.lr_scheduler as lr_scheduler
 matplotlib.style.use('ggplot')
 # start_time = time.time() 
 
+from sklearn.neighbors import KernelDensity
+
+def calculate_density_weights(keypoints_array, bandwidth=10.0):
+    """
+    Calculate weights based on local density - rare positions get higher weights
+    """
+    # Fit kernel density estimator
+    kde = KernelDensity(bandwidth=bandwidth, kernel='gaussian')
+    keypoints_flattened = keypoints_array.reshape(keypoints_array.shape[0], -1)
+    kde.fit(keypoints_flattened)
+    
+    # Get log density for each point
+    log_density = kde.score_samples(keypoints_flattened)
+    density = np.exp(log_density)
+    
+    # Invert density to get weights (low density = high weight)
+    weights = 1.0 / (density + 1e-8)
+    
+    # Normalize weights
+    weights = weights / np.mean(weights)
+    
+    return weights
+
+
 # training function
 def fit(model, dataloader, data, config):
     print('Training')
@@ -38,7 +62,12 @@ def fit(model, dataloader, data, config):
         keypoints = keypoints.view(keypoints.size(0), -1)
         optimizer.zero_grad()
         outputs = model(image)
+        # regular loss 
         loss = criterion(outputs, keypoints)
+        # weighted loss: 
+        batch_indices = data['index']  # You'll need to add this to your dataset
+        batch_weights = torch.tensor([sample_weights[idx] for idx in batch_indices])
+        loss = (loss * batch_weights.to(config['training']['device'])).mean()
         train_running_loss += loss.item()
         loss.backward()
         optimizer.step()
@@ -102,7 +131,7 @@ with open(args.config, "rb") as configfile:
 
 ## create output path
 if not os.path.exists(f"{config['paths']['models_output']}"):
-    os.makedirs(f"{args.output}", exist_ok=True)
+    os.makedirs(f"{config['paths']['models_output']}", exist_ok=True)
 
 # model
 #model = snowPoleResNet50(pretrained=True, requires_grad=False).to(args.device)
@@ -141,13 +170,23 @@ scheduler = lr_scheduler.ReduceLROnPlateau(
     optimizer,
     mode='min',           # Minimize validation loss
     factor=0.5,          # Reduce LR by 50% when plateau
-    patience=10,         # Wait 10 epochs before reducing
+    patience=5,         # Wait 10 epochs before reducing
     verbose=True,        # Print when LR changes
     min_lr=1e-7,         # Don't go below this LR
     threshold=0.001      # Threshold for measuring improvement
 )
 
 criterion = nn.SmoothL1Loss()
+
+### weighted loss ## 
+# Calculate weights once before training
+training_keypoints = []  # Collect all training keypoints first
+for data in train_loader:
+    training_keypoints.append(data['keypoints'].numpy())
+training_keypoints = np.vstack(training_keypoints)
+
+sample_weights = calculate_density_weights(training_keypoints)
+
 
 train_loss = []
 val_loss = []
@@ -184,7 +223,7 @@ for epoch in range(config['training']['epochs']):
     if val_epoch_loss < best_loss_val:
                 best_loss_val = val_epoch_loss
                 best_loss_val_epoch = epoch
-    elif epoch > best_loss_val_epoch + 10:
+    elif epoch > best_loss_val_epoch + 20:
             break
 
 # loss plots
