@@ -1,3 +1,6 @@
+#current model structure
+#Input Images → CNN (ResNet50) → Feature Maps → LSTM → FC Layer → Output Keypoints
+
 import torch.nn as nn
 import torch.nn.functional as F
 import pretrainedmodels  

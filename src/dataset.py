@@ -189,8 +189,10 @@ class snowPoleDataset(Dataset):
 
 # get the training and validation data samples
 training_samples, valid_samples = train_test_split(
-    f"{config['paths']['input_images']}/labels.csv", config['paths']['input_images']
+    f"{config['paths']['labels']}", config['paths']['input_images']
 )
+
+#{config['paths']['input_images']}/
 
 # initialize the dataset - `snowPoleDataset()`
 train_data = snowPoleDataset(

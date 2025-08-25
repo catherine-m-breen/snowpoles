@@ -126,7 +126,7 @@ df_data = pd.read_csv(csv_path)
 print(f'all rows in df_data {len(df_data.index)}')
 
 ## create sequences ## 
-sequence_length = 3 
+sequence_length = 3
 grouped = df_data.groupby(df_data['filename'].str.split('_').str[0])
 X_sequences, keypoints = [], [] ## sequences (as filenames) and predictions (last filename's keypoint)
     

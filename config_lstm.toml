@@ -3,15 +3,15 @@
 
 
 [paths]
-input_images = "/Users/cmbreen/Documents/FDLTCC/FF_2024"
+input_images = "/Users/cmbreen/Documents/snow/alaska_dataset/all_images"
 trainee_model = "/Users/cmbreen/Documents/FDLTCC/models/CO_and_WA_model.pth"
-models_output = "models/trained_cam_FF_lr001_pat5_weighted" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
+models_output = "models/trained_cam_alaska_lr001_pat5_weighted_seq3_warmup" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
 
 [labeling]
 subset_to_label = 10 # Label every N images
 
 [training]
-lr = 0.001 # Learning Rate ## make it even bigger to start? 
+lr = 0.0001 # Learning Rate ## make it even bigger to start? 
 epochs = 200 # Epochs
 aug = false # whether to augment the data or not 
 device = "cpu" # Device to use, either "cuda" or "cpu".
@@ -19,9 +19,10 @@ batch_size = 8 # Batch size
 show_dataset_plot = false # Show dataset plot
 filter = false
 
+
 # LSTM-specific settings
 use_lstm = true # Whether to use LSTM model for sequence training
-sequence_length = 2 # Number of consecutive frames to use in LSTM sequences
+sequence_length = 3 # Number of consecutive frames to use in LSTM sequences
 progressive_training = true # Use progressive training (LSTM first, then fine-tune CNN)
 lstm_hidden_size = 256 # Hidden size for LSTM layer
 lstm_num_layers = 1 # Number of LSTM layers

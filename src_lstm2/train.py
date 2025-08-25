@@ -1,3 +1,6 @@
+## to launch with tensorboard: 
+# tensorboard --logdir=runs
+
 # Import startup libraries
 import argparse
 import tomli as tomllib
@@ -19,10 +22,55 @@ from model_download import download_models
 from dataset import train_data, train_loader, valid_data, valid_loader
 import torch.optim.lr_scheduler as lr_scheduler
 
+# training viz 
+from torch.utils.tensorboard import SummaryWriter  # For PyTorch
+
+writer = SummaryWriter('runs/warm_up_exp')
+
 matplotlib.style.use('ggplot')
 # start_time = time.time() 
 
 from sklearn.neighbors import KernelDensity
+
+
+# warm up period 
+# real-world example that shows it didn't get stuck in local minima: https://link.springer.com/article/10.1007/s40808-024-02211-z 
+# other one; Kalra, D. S., & Barkeshli, M. (n.d.). Why Warmup the Learning Rate? Underlying Mechanisms and Improvements.
+
+class WarmupScheduler:
+    """
+    Scheduler that handles warm-up phase followed by main scheduler
+    """
+    def __init__(self, optimizer, warmup_epochs, main_scheduler):
+        self.optimizer = optimizer
+        self.warmup_epochs = warmup_epochs
+        self.main_scheduler = main_scheduler
+        self.current_epoch = 0
+        
+        # Store initial learning rates
+        self.initial_lrs = []
+        for group in optimizer.param_groups:
+            self.initial_lrs.append(group['lr'])
+    
+    def step(self, val_loss=None):
+        if self.current_epoch < self.warmup_epochs:
+            # Warm-up phase - linearly increase LR
+            warmup_factor = float(self.current_epoch + 1) / float(self.warmup_epochs)
+            for i, group in enumerate(self.optimizer.param_groups):
+                group['lr'] = self.initial_lrs[i] * warmup_factor
+                print(f"Warm-up: LR set to {group['lr']:.6f} (group {i})")
+        else:
+            # Main scheduling phase - use ReduceLROnPlateau
+            self.main_scheduler.step(val_loss)
+        
+        self.current_epoch += 1
+    
+    def get_last_lr(self):
+        return [group['lr'] for group in self.optimizer.param_groups]
+
+
+
+
 
 def calculate_density_weights(keypoints_array, bandwidth=10.0):
     """
@@ -117,6 +165,15 @@ def validate(model, dataloader, data, epoch, config):
                 utils.valid_keypoints_plot(image, outputs, keypoints, epoch)
         
     valid_loss = valid_running_loss/counter
+        # In your validate function, you could log sample images periodically:
+    if epoch % 10 == 0:  # Every 10 epochs
+        #IPython.embed()
+        vis_images = image[:4]
+        # Reshape to show all frames: (batch*sequence, channels, height, width)
+        batch_size, seq_len, channels, height, width = vis_images.shape
+        vis_images = vis_images.reshape(batch_size * seq_len, channels, height, width)
+    
+        writer.add_images('Validation_Images', vis_images, epoch)
     return valid_loss
 
 ###### TRAINING SCRIPT ####
@@ -166,17 +223,26 @@ optimizer = optim.Adam([
     {'params': model.fc.parameters(), 'lr': config['training']['lr']}
 ])
 
-scheduler = lr_scheduler.ReduceLROnPlateau(
+main_scheduler = lr_scheduler.ReduceLROnPlateau(
     optimizer,
     mode='min',           # Minimize validation loss
     factor=0.5,          # Reduce LR by 50% when plateau
-    patience=5,         # Wait 10 epochs before reducing
+    patience=5,         # Wait 5 epochs before reducing
     verbose=True,        # Print when LR changes
     min_lr=1e-7,         # Don't go below this LR
     threshold=0.001      # Threshold for measuring improvement
 )
 
-criterion = nn.SmoothL1Loss()
+warmup_epochs = 5
+scheduler = WarmupScheduler(optimizer, warmup_epochs, main_scheduler)
+
+criterion = nn.SmoothL1Loss() 
+
+### this is the equation for the smooth l1 loss: 
+# SmoothL1Loss(x) = {
+#     0.5 * x^2                if |x| < beta
+#     |x| - 0.5 * beta         if |x| ≥ beta
+# }
 
 ### weighted loss ## 
 # Calculate weights once before training
@@ -206,6 +272,16 @@ for epoch in range(config['training']['epochs']):
     print(f'Val Loss: {val_epoch_loss:.4f}')
     
     scheduler.step(val_epoch_loss)
+
+    current_lrs = scheduler.get_last_lr()
+
+    writer.add_scalar('Loss/train',train_epoch_loss, epoch)
+    writer.add_scalar('Loss/validation',val_epoch_loss, epoch)
+    writer.add_scalar('Learning_Rate/CNN', current_lrs[0], epoch)  # CNN backbone
+    writer.add_scalar('Learning_Rate/LSTM', current_lrs[1], epoch)  # LSTM
+    writer.add_scalar('Learning_Rate/FC', current_lrs[2], epoch)    # Fully connected
+    #writer.add_scalar('Learning_Rate', current_lr, epoch)
+    writer.flush()
     
     ####### saving model every 50 epochs
     if (epoch % 50) == 0:
@@ -244,4 +320,5 @@ torch.save(
     },
     f"{config['paths']['models_output']}/model.pth",
 )  ### the last model
+writer.close()
 print("DONE TRAINING")

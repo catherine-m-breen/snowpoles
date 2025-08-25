@@ -12,6 +12,8 @@ Water Resources Research, 60(7), e2023WR036682. https://doi.org/10.1029/2023WR03
 example run (after updating config)
 python src/train.py
 
+tensorboard --logdir=runs
+
 '''
 
 # Import startup libraries
@@ -140,6 +142,12 @@ from dataset import train_data, train_loader, valid_data, valid_loader
 matplotlib.style.use('ggplot')
 # start_time = time.time() 
 
+# training viz 
+from torch.utils.tensorboard import SummaryWriter  # For PyTorch
+
+writer = SummaryWriter(f'runs/trained_alaska_cnn_onepole')
+
+
 ## create output path
 if not os.path.exists(f"{args.output}"):
     os.makedirs(f"{args.output}", exist_ok=True)
@@ -233,6 +241,7 @@ val_loss = []
 #######################
 best_loss_val = np.inf
 best_loss_val_epoch = 0 
+best_model = model
 #######################
 for epoch in range(args.epochs):
 
@@ -255,21 +264,32 @@ for epoch in range(args.epochs):
             f"{args.output}/model_epoch{epoch}.pth",
         )
 
+    writer.add_scalar('Loss/train',train_epoch_loss, epoch)
+    writer.add_scalar('Loss/validation',val_epoch_loss, epoch)
+    writer.flush()
 
     ####### early stopping #########
     if val_epoch_loss < best_loss_val:
                 best_loss_val = val_epoch_loss
                 best_loss_val_epoch = epoch
+                best_model = epoch
     elif epoch > best_loss_val_epoch + 10:
+            epoch = best_model ### save model at lowest val error, rather than 10 epochs later 
             break
 
 # loss plots
 plt.figure(figsize=(10, 7))
 plt.plot(train_loss, color='orange', label='train loss')
-plt.plot(val_loss, color='red', label='validataion loss')
+plt.plot(val_loss, color='red', label='validation loss')
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.legend()
+# Add white background and light grey grid
+plt.gca().set_facecolor('white')
+plt.grid(True, color='lightgrey', linestyle='-', linewidth=0.5)
+plt.gca().set_axisbelow(True)  # Put grid lines behind the plot lines
+##
+
 plt.savefig(f"{args.output}/loss.png")
 plt.close()  # changed from plt.show()
 torch.save(
@@ -281,6 +301,7 @@ torch.save(
     },
     f"{args.output}/model.pth",
 )  ### the last model
+writer.close()
 print("DONE TRAINING")
 
 # print("My program took", time.time() - start_time, "to run")
