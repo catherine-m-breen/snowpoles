@@ -119,9 +119,20 @@ from tqdm import tqdm
 from scipy.spatial import distance
 import os
 import matplotlib.pyplot as plt
+import json
 
 def load_model():
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
+
+      # Load camera mapping first
+    camera_mapping = load_camera_mapping(args.model)
+    num_cameras = len(camera_mapping)
+
+    model = snowPoleResNet50(
+        pretrained=False, 
+        requires_grad=False, 
+        num_cameras=num_cameras,
+        embedding_dim=64  # Should match training
+    ).to(args.device)
     # load the model checkpoint
     model_path = f"{args.model}/model.pth"
     checkpoint = torch.load(model_path, map_location=torch.device(args.device))
@@ -129,10 +140,33 @@ def load_model():
     # load model weights state_dict
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
-    return model
+    return model, camera_mapping
+
+def load_camera_mapping(model_path):
+    """
+    Load camera mapping from the saved JSON file
+    """
+    mapping_file = os.path.join(model_path, "camera_mapping.json")
+    
+    with open(mapping_file, 'r') as f:
+        camera_mapping = json.load(f)
+    print(f"Loaded camera mapping with {len(camera_mapping)} cameras from {mapping_file}")
+    return camera_mapping
+
+def get_camera_id(filename, camera_mapping):
+    """
+    Extract camera ID from filename and convert to numeric
+    """
+    camera_name = filename.split('_')[0]
+    
+    if camera_name in camera_mapping:
+        return camera_mapping[camera_name]
+    else:
+        print(f"Warning: Camera '{camera_name}' not in mapping. Using 0 as default.")
+        return 0
 
 
-def predict(model, data, eval='eval'): 
+def predict(model, data, camera_mapping, eval='eval'): 
 
     if not os.path.exists(f"{args.output}/{eval}"):
         os.makedirs(f"{args.output}/{eval}", exist_ok=True)
@@ -150,7 +184,8 @@ def predict(model, data, eval='eval'):
     automated_sds, manual_sds, diff_sds = [], [], []
 
     metadata =  pd.read_csv(f"{config.metadata}")
-    labels =  pd.read_csv(f"{config.labels}")
+    labels =  pd.read_csv('/Users/cmbreen/code/snowpoles/models/trained_alaska_cnn_allpoles_camembed_lr1e4/valid_samples.csv')
+    #pd.read_csv(f"{config.labels}")
 
     with torch.no_grad():
         for i, data in tqdm(enumerate(data)): 
@@ -158,13 +193,17 @@ def predict(model, data, eval='eval'):
             filename = data['filename']
             Camera = filename.split('_W')[0]
             #Camera = "_".join(filename.split("_")[:2])
+            
+            # get camera embedding 
+            camera_id = get_camera_id(filename, camera_mapping)
+            camera_ids = torch.tensor([camera_id], dtype = torch.long, device = args.device)
 
             # flatten the keypoints
             keypoints = keypoints.detach().cpu().numpy().reshape(-1,2)
             x1_true, y1_true, x2_true, y2_true = keypoints[0,0], keypoints[0,1], keypoints[1,0], keypoints[1,1]
             ## add an empty dimension for sample size
             image = image.unsqueeze(0)
-            outputs = model(image)
+            outputs = model(image, camera_ids)
             outputs = outputs.detach().cpu().numpy()
             
             utils.eval_keypoints_plot(filename, image, outputs, eval, orig_keypoints=keypoints) ## visualize points
@@ -183,12 +222,13 @@ def predict(model, data, eval='eval'):
                 pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
                 automated_sd = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
             
-            except Exception: 
-                print(Camera)
+            except Exception as e: 
+                print(f"Error processing camera {Camera}: {e}")
                 IPython.embed()
             automated_sds.append(automated_sd)
 
             # ## difference between automated and manual
+            #IPython.embed()
             manual_pixel_length = labels[labels['filename'] == filename]['PixelLengths'].values[0]
             manual_snowdepth = full_length_pole_cm - (pixel_cm_conversion * manual_pixel_length)
             difference = manual_snowdepth - automated_sd
@@ -259,9 +299,9 @@ def predict(model, data, eval='eval'):
     return results
 
 def main():
-    model = load_model()
+    model, camera_mapping = load_model()
     print('results on valid data\n')
-    outputs = predict(model, valid_data)
+    outputs = predict(model, valid_data, camera_mapping)
 
 if __name__ == '__main__':
     main()

@@ -34,6 +34,7 @@ from scipy.spatial import distance
 import torch
 from tqdm import tqdm
 import IPython
+import json
 
 def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=15):
     import matplotlib.pyplot as plt
@@ -49,20 +50,60 @@ def vis_predicted_keypoints(file, image, keypoints, color=(0, 255, 0), diameter=
     plt.savefig(f"{args.model}/predictions/pred_{file}.png")
     plt.close()
 
+def load_camera_mapping(model_path):
+    """
+    Load camera mapping from the saved JSON file
+    """
+    mapping_file = os.path.join(model_path, "camera_mapping.json")
+    with open(mapping_file, 'r') as f:
+        camera_mapping = json.load(f)
+    print(f"Loaded camera mapping with {len(camera_mapping)} cameras from {mapping_file}")
+    return camera_mapping
+
+#### if using a totally new dataset ## we don'treally need this
+# def create_camera_mapping_from_images(image_files):
+#     """
+#     Create camera mapping from image filenames if no saved mapping exists
+#     """
+#     camera_names = set()
+#     for file_path in image_files:
+#         filename = Path(file_path).name
+#         camera_name = filename.split('_')[0]
+#         camera_names.add(camera_name)
+    
+#     camera_names = sorted(list(camera_names))
+#     camera_mapping = {camera: idx for idx, camera in enumerate(camera_names)}
+    
+#     print(f"Created camera mapping from images: {camera_mapping}")
+#     return camera_mapping
+
 def load_model(args):
     from model import snowPoleResNet50
     import torch
 
-    model = snowPoleResNet50(pretrained=False, requires_grad=False).to(args.device)
+    camera_mapping = load_camera_mapping(args.model)
+    num_cameras = len(camera_mapping)
+    model = snowPoleResNet50(
+        pretrained=False, 
+        requires_grad=False, 
+        num_cameras=num_cameras,
+        embedding_dim=64  # Should match training
+    ).to(args.device)
     # load the model checkpoint
     #torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
     model_path = f"{args.model}/model.pth"
     checkpoint = torch.load(model_path, map_location=torch.device(args.device))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
-    return model
+    return model, camera_mapping
 
-def predict(model, args, device):  
+# def get_camera_id(filename, camera_mapping):
+#     camera_name = filename.split('_')[0]
+#     if camera_name in camera_mapping:
+#         return camera_mapping[camera_name]
+
+
+def predict(model, args, device, camera_mapping = None):  
     if not os.path.exists(f"{args.model}/predictions"):
         os.makedirs(f"{args.model}/predictions", exist_ok=True)
 
@@ -106,8 +147,13 @@ def predict(model, args, device):
             image = image.unsqueeze(0)
             image = image.to(device)
 
+            ## camera mapping
+            camera_id = camera_mapping[Camera]
+            camera_ids = torch.tensor([camera_id], dtype=torch.long, device=device)
+
+
             #######
-            outputs = model(image)
+            outputs = model(image, camera_ids)
             outputs = outputs.cpu().numpy() 
             pred_keypoint = np.array(outputs[0], dtype='float32')
 
@@ -250,9 +296,9 @@ def main():
     import IPython
     import utils
 
-    model = load_model(args)
+    model, camera_mapping = load_model(args)
     device = 'cpu'
-    predict(model, args, device)  
+    predict(model, args, device, camera_mapping)  
 
 if __name__ == '__main__':
     main()
