@@ -60,48 +60,36 @@ def load_camera_mapping(model_path):
     print(f"Loaded camera mapping with {len(camera_mapping)} cameras from {mapping_file}")
     return camera_mapping
 
-#### if using a totally new dataset ## we don'treally need this
-# def create_camera_mapping_from_images(image_files):
-#     """
-#     Create camera mapping from image filenames if no saved mapping exists
-#     """
-#     camera_names = set()
-#     for file_path in image_files:
-#         filename = Path(file_path).name
-#         camera_name = filename.split('_')[0]
-#         camera_names.add(camera_name)
-    
-#     camera_names = sorted(list(camera_names))
-#     camera_mapping = {camera: idx for idx, camera in enumerate(camera_names)}
-    
-#     print(f"Created camera mapping from images: {camera_mapping}")
-#     return camera_mapping
-
 def load_model(args):
     from model import snowPoleResNet50
     import torch
 
     camera_mapping = load_camera_mapping(args.model)
     num_cameras = len(camera_mapping)
+    
+    # Initialize model with time embedding support
     model = snowPoleResNet50(
         pretrained=False, 
         requires_grad=False, 
         num_cameras=num_cameras,
-        embedding_dim=64  # Should match training
+        embedding_dim=64,  # Should match training
+        time_embedding_dim=32  # Add time embedding dimension
     ).to(args.device)
+    
     # load the model checkpoint
-    #torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
+    torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
     model_path = f"{args.model}/model.pth"
     checkpoint = torch.load(model_path, map_location=torch.device(args.device))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     return model, camera_mapping
 
-# def get_camera_id(filename, camera_mapping):
-#     camera_name = filename.split('_')[0]
-#     if camera_name in camera_mapping:
-#         return camera_mapping[camera_name]
-
+def format_datetime(dt_string):
+    """
+    Format datetime string to mm/dd/yy HH:MM format used in training
+    """
+    dt = datetime.datetime.strptime(dt_string, "%m/%d/%Y %H:%M")
+    return dt.strftime("%m/%d/%y %H:%M")
 
 def predict(model, args, device, camera_mapping = None):  
     if not os.path.exists(f"{args.model}/predictions"):
@@ -114,10 +102,7 @@ def predict(model, args, device, camera_mapping = None):
     snow_depths = []
 
     ## folder or directory
-    #IPython.embed()
-    #snowpolefiles = glob.glob(f"{args.path}/**/*")
     snowpolefiles = list(Path(args.path).rglob("*.JPG"))
-    snowpolefiles = [f for f in snowpolefiles if not f.name.startswith('.')] ## the weird dot in the front
 
     metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
 
@@ -127,8 +112,9 @@ def predict(model, args, device, camera_mapping = None):
             image = cv2.imread(str(file))
             creationTime = os.path.getmtime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
-            formatted_datetime = dt_c.strftime("%m/%d/%Y %H:%M")
+            formatted_datetime = dt_c.strftime("%m/%d/%y %H:%M")  # Changed to %y for 2-digit year
             datetimes.append(formatted_datetime)
+
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             h, w, *_ = image.shape
             image = cv2.resize(image, (224,224))
@@ -138,8 +124,6 @@ def predict(model, args, device, camera_mapping = None):
             file_path = Path(file)
             filename = file_path.name
             Camera = file_path.stem.split('_')[0]
-            #filename = file.split('/')[-1]
-            #Camera = filename.split('/')[-1] ## assumes in a folder with camera name ('cam1', 'cam2', etc)
             
             ## add an empty dimension for sample size
             image = np.transpose(image, (2, 0, 1)) ## 
@@ -150,10 +134,12 @@ def predict(model, args, device, camera_mapping = None):
             ## camera mapping
             camera_id = camera_mapping[Camera]
             camera_ids = torch.tensor([camera_id], dtype=torch.long, device=device)
+            
+            ## datetime for time embedding
+            datetime_strings = [formatted_datetime]  # List with single datetime string
 
-
-            #######
-            outputs = model(image, camera_ids)
+            ## Forward pass with datetime
+            outputs = model(image, camera_ids, datetime_strings)
             outputs = outputs.cpu().numpy() 
             pred_keypoint = np.array(outputs[0], dtype='float32')
 
@@ -169,7 +155,7 @@ def predict(model, args, device, camera_mapping = None):
             pred_keypoint[1] = pred_keypoint[1] * (h / 224)
             pred_keypoint[3] = pred_keypoint[3] * (h /224)
 
-            if i % 200 == 0: vis_predicted_keypoints(filename, image, pred_keypoint,) 
+            if i % 100 == 0: vis_predicted_keypoints(filename, image, pred_keypoint,) 
             x1_pred, y1_pred, x2_pred, y2_pred = pred_keypoint[0], pred_keypoint[1], pred_keypoint[2], pred_keypoint[3]
             
             Cameras.append(Camera)
@@ -184,7 +170,8 @@ def predict(model, args, device, camera_mapping = None):
                 pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
                 snow_depth = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
                 snow_depths.append(snow_depth)
-            except: 
+            except Exception as e: 
+                print(f"Warning: Could not calculate snow depth for {Camera}: {e}")
                 ## if you don't have a metadata stored properly it will just insert a 0 for snowdepth
                 snow_depths.append(0)
             
@@ -302,6 +289,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-

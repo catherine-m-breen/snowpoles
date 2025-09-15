@@ -14,17 +14,8 @@ The labels.csv file can then be directly pointed at train.py for fine-tuning. Th
 
 example run 
 
+python src/labeling.py --datapath "/path/to/nontrained/data" --pole_length "304.8" --subset_to_label "2"
 python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/FF_2024" --subset_to_label "10"
-
-python src/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/BC1TLDA" --subset_to_label "10"
-python src_lstm2/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/BC_final_448" --subset_to_label "10"
-python src_lstm2/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/CP_final_448" --subset_to_label "10"
-
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/BC 23-24" --subset_to_label "10"
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP_final/CPEB13" --subset_to_label "10"
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP_final/CPMB14" --subset_to_label "10"
-
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP 23-24" --subset_to_label "10"
 
 
 """
@@ -110,7 +101,6 @@ def main():
     dir = list(
         Path(args.path).rglob("*.JPG")
     )  # Recursively lists all files and directories
-    dir = [f for f in dir if not f.name.startswith('._')]
     dir = sorted(dir)
 
     ## labeling data
@@ -147,7 +137,7 @@ def main():
                     topY.append(splitline[4])
                     bottomX.append(splitline[5])
                     bottomY.append(splitline[6])
-                    PixelLengths.append(splitline[7])
+                    PixelLengths.append(splitline[7].strip("\n"))
                     snowdepths.append(splitline[8].strip("\n"))
 
     except FileNotFoundError:
@@ -156,68 +146,61 @@ def main():
         print("labels.csv is corrupted or does not exist, creating...")
         with open(f"{args.path}/labels.csv", "w") as labels2_csv:
             labels2_csv.write(
-                '"filename","datetime","x1","y1","x2","y2","PixelLengths","SnowDepths"'
+                '"filename","datetime","x1","y1","x2","y2","PixelLengths"'
             )
 
-    if not os.path.exists(f"{args.path}/pole_metadata.csv"):
-        ######## for pole_metdata #######
-        processed_cameras = set()  # Track which cameras we've already processed
-        meta_cameraids = []
-        full_pole_length_pxs =[]
-        pole_length_cms = []
-        conversions = []
-        heights = []
-        widths = []
+    ######## for pole_metdata #######
+    processed_cameras = set()  # Track which cameras we've already processed
+    meta_cameraids = []
+    full_pole_length_pxs =[]
+    pole_length_cms = []
+    conversions = []
+    heights = []
+    widths = []
 
-        for j, file in tqdm.tqdm(enumerate(dir)):
-            # Skip if we've already processed this camera
-            cameraID = Path(file).parent.name
-            if cameraID in processed_cameras:
-                continue
-            processed_cameras.add(cameraID)
-            img = cv2.imread(str(file))
-            #print(str(file))
-            width, height, channel = img.shape
-                ## assumes the cameras are stored in folder with their camera name
-            figure = plt.figure(figsize=(20, 10), num=Path(file).name)
-            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            plt.title("label top and then bottom of 10cm section", fontweight="bold")
-            top_10, bottom_10 = plt.ginput(2)
-            plt.close()
-            figure = plt.figure(figsize=(20, 10), num=Path(file).name)
-            plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            plt.title("label top and then bottom of full pole", fontweight="bold")
-            top, bottom = plt.ginput(2)
-            plt.close()
-            full_pole_length_px = math.dist((top), (bottom))
-            full_pole_length_cm = (10 / math.dist((top_10), (bottom_10))) *  math.dist((top), (bottom))
-            full_pole_length_pxs.append(full_pole_length_px)
-            pole_length_cms.append(full_pole_length_cm), meta_cameraids.append(cameraID)
+    for j, file in tqdm.tqdm(enumerate(dir)):
+        # Skip if we've already processed this camera
+        cameraID = Path(file).parent.name
+        if cameraID in processed_cameras:
+            continue
+        processed_cameras.add(cameraID)
+        img = cv2.imread(str(file))
+        width, height, channel = img.shape
+            ## assumes the cameras are stored in folder with their camera name
+        figure = plt.figure(figsize=(20, 10), num=Path(file).name)
+        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        plt.title("label top and then bottom of 10cm section", fontweight="bold")
+        top_10, bottom_10 = plt.ginput(2)
+        plt.close()
+        figure = plt.figure(figsize=(20, 10), num=Path(file).name)
+        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        plt.title("label top and then bottom of full pole", fontweight="bold")
+        top, bottom = plt.ginput(2)
+        plt.close()
+        full_pole_length_px = math.dist((top), (bottom))
+        full_pole_length_cm = (10 / math.dist((top_10), (bottom_10))) *  math.dist((top), (bottom))
+        full_pole_length_pxs.append(full_pole_length_px)
+        pole_length_cms.append(full_pole_length_cm), meta_cameraids.append(cameraID)
 
-            conversion = full_pole_length_cm / full_pole_length_px 
-            conversions.append(conversion)
-            width, height, channel = img.shape
-            heights.append(height), widths.append(width)
-        
-        pole_length_cm_lookup = dict(zip(meta_cameraids, pole_length_cms))
-        conversion_lookup = dict(zip(meta_cameraids, conversions))
+        conversion = full_pole_length_cm / full_pole_length_px 
+        conversions.append(conversion)
+        width, height, channel = img.shape
+        heights.append(height), widths.append(width)
+    
+    pole_length_cm_lookup = dict(zip(meta_cameraids, pole_length_cms))
+    conversion_lookup = dict(zip(meta_cameraids, conversions))
 
-        metadata = pd.DataFrame(
-            {
-                "camera_id": pd.unique(meta_cameraids),
-                "first_pole_length_px": full_pole_length_pxs,
-                "pole_length_cm": pole_length_cms,
-                "pixel_cm_conversion": conversions,
-                "width": widths,
-                "height": heights,
-            }
-        )
-        metadata.to_csv(f"{args.path}/pole_metadata.csv", index=False)
-    else: 
-        metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
-        pole_length_cm_lookup = dict(zip(metadata['camera_id'], metadata['pole_length_cm']))
-        conversion_lookup = dict(zip(metadata['camera_id'], metadata['pixel_cm_conversion']))
-
+    metadata = pd.DataFrame(
+        {
+            "camera_id": pd.unique(meta_cameraids),
+            "first_pole_length_px": full_pole_length_pxs,
+            "pole_length_cm": pole_length_cms,
+            "pixel_cm_conversion": conversions,
+            "width": widths,
+            "height": heights,
+        }
+    )
+    metadata.to_csv(f"{args.path}/pole_metadata.csv", index=False)
 
 
     ### loop to label every nth photo!
@@ -250,24 +233,22 @@ def main():
             PixelLength = math.dist(top, bottom)
             PixelLengths.append(PixelLength)
 
+            ## save data to labels.csv
+            nextline = f"\n{Path(file).name},{os.path.getctime(file)},{top[0]},{top[1]},{bottom[0]},{bottom[1]},{PixelLength}"
+            with open(f"{args.path}/labels.csv", "a") as labels2_csv:
+                labels2_csv.write(nextline)
+
             filename.append(Path(file).name)
             creationTime = os.path.getmtime(file)
             dt_c = datetime.datetime.fromtimestamp(creationTime)
             formatted_datetime = dt_c.strftime("%m/%d/%Y %H:%M")
             creationTimes.append(formatted_datetime)
 
-            # ## snowdepth ##
+            ## snowdepth ##
             snowdepth = pole_length_cm_lookup[cameraID] - (PixelLength * conversion_lookup[cameraID])
             snowdepths.append(snowdepth)
 
-            ## save data to labels.csv
-            nextline = f"\n{cameraID},{Path(file).name},{formatted_datetime},{top[0]},{top[1]},{bottom[0]},{bottom[1]},{PixelLength},{snowdepth}"
-            with open(f"{args.path}/labels.csv", "a") as labels2_csv:
-                labels2_csv.write(nextline)
-
         i += 1
-
-              ## snowdepth ##
 
     ## simplified table for snow depth conversion later on
     df = pd.DataFrame(

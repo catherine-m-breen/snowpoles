@@ -5,14 +5,6 @@ July 2024
 run with:
 python preprocess/rename_photos.py --path "./nontrained_data"
 
-python src_lstm2/rename_photos.py --path "/Users/cmbreen/Documents/snow/alaska_dataset/BC_final_448"
-
-python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/BC_final"
-python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP_final"
-python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/BC 23-24"
-python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP 23-24"
-python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP_final/CPEB13"
-python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP_final/CPMB14"
 """
 
 import glob

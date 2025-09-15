@@ -1,33 +1,13 @@
-"""
-written by Catherine M. Breen 
-cbreen@uw.edu 
-
-Use of our keypoint detection model currently requires ~10 images per camera. We provide a labeling script below that when pointed 
-at a camera directory (i.e., data > cam1 or data > cam2, etc), walks the user through labeling every 10th image and saves as labels.csv in a specified direrctory. 
-
-We estimate it will take about 5 imgs/min or about 300 imgs per hour. 
-
-x1,y1 = top 
-x2,y2 = bottom
-
-The labels.csv file can then be directly pointed at train.py for fine-tuning. The user can then run predict.py to extract the snow depth.
-
-example run 
-
-python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/FF_2024" --subset_to_label "10"
-
-python src/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/BC1TLDA" --subset_to_label "10"
-python src_lstm2/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/BC_final_448" --subset_to_label "10"
-python src_lstm2/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/CP_final_448" --subset_to_label "10"
-
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/BC 23-24" --subset_to_label "10"
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP_final/CPEB13" --subset_to_label "10"
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP_final/CPMB14" --subset_to_label "10"
-
-python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP 23-24" --subset_to_label "10"
+## load in the old csv
 
 
-"""
+## load up all the images 
+
+## look up the image of interest 
+
+## open that image and get the new ginput 
+
+
 
 import cv2
 import matplotlib.pyplot as plt
@@ -51,11 +31,8 @@ def main():
     parser.add_argument(
         "--datapath", help="(deprecated) directory where images are located"
     )
-    # parser.add_argument(
-    #     "--pole_length", help="length of pole in cm"
-    # )
     parser.add_argument(
-        "--subset_to_label", help="label every N images"
+        "--image", help="label every N images"
     )
     parser.add_argument(
         "--no_confirm", required=False, help="skip confirmation", action="store_true"
@@ -110,7 +87,6 @@ def main():
     dir = list(
         Path(args.path).rglob("*.JPG")
     )  # Recursively lists all files and directories
-    dir = [f for f in dir if not f.name.startswith('._')]
     dir = sorted(dir)
 
     ## labeling data
@@ -176,7 +152,6 @@ def main():
                 continue
             processed_cameras.add(cameraID)
             img = cv2.imread(str(file))
-            #print(str(file))
             width, height, channel = img.shape
                 ## assumes the cameras are stored in folder with their camera name
             figure = plt.figure(figsize=(20, 10), num=Path(file).name)

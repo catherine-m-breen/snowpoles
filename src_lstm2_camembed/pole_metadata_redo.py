@@ -4,14 +4,6 @@ python pole_metadata_redo.py --path '/Users/cmbreen/Documents/snow/alaska_datase
 
 python pole_metadata_redo.py --path '/Users/cmbreen/Documents/snow/alaska_dataset/all_images/snowfree_photos/CP_final_448'
 
-python pole_metadata_redo.py --path '/Users/cmbreen/Documents/snow/alaska_dataset/all_images/snowfree_photos_fullres/BC_final'
-python pole_metadata_redo.py --path '/Users/cmbreen/Documents/snow/alaska_dataset/all_images/snowfree_photos_fullres/CP_final'
-
-
-python pole_metadata_redo.py --path '/Users/cmbreen/Documents/snow/alaska_dataset/all_images/snowfree_photos_fullres/CP_final'
-python pole_metadata_redo.py --path '/Volumes/My Book/snex17'
-
-python pole_metadata_redo.py --path '/Users/cmbreen/Documents/snow/alaska_dataset/snowfree_photos_fullres_part2/CP 22-23'
 
 '''
 

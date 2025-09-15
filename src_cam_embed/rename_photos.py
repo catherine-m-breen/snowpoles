@@ -5,6 +5,8 @@ July 2024
 run with:
 python preprocess/rename_photos.py --path "./nontrained_data"
 
+python preprocess/rename_photos.py --path "./nontrained_data"
+
 """
 
 import glob

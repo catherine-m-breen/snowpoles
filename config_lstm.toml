@@ -5,7 +5,8 @@
 [paths]
 input_images = "/Users/cmbreen/Documents/snow/alaska_dataset/all_images"
 trainee_model = "/Users/cmbreen/Documents/FDLTCC/models/CO_and_WA_model.pth"
-models_output = "models/trained_cam_alaska_lr001_pat5_weighted_seq3_warmup" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
+models_output = "models/trained_cam_alaska_lr001_pat5_weighted_seq3_warmup_nativeRes" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
+labels = '/Users/cmbreen/Documents/snow/alaska_dataset/submission/v1/labels.csv'
 
 [labeling]
 subset_to_label = 10 # Label every N images
@@ -21,11 +22,11 @@ filter = false
 
 
 # LSTM-specific settings
-use_lstm = true # Whether to use LSTM model for sequence training
-sequence_length = 3 # Number of consecutive frames to use in LSTM sequences
+##use_lstm = true # Whether to use LSTM model for sequence training
+##sequence_length = 4 # Number of consecutive frames to use in LSTM sequences
 progressive_training = true # Use progressive training (LSTM first, then fine-tune CNN)
-lstm_hidden_size = 256 # Hidden size for LSTM layer
-lstm_num_layers = 1 # Number of LSTM layers
+###lstm_hidden_size = 256 # Hidden size for LSTM layer
+###lstm_num_layers = 1 # Number of LSTM layers
 lstm_lr = 0.001 # Learning rate for LSTM components (used in progressive training)
 cnn_lr = 0.00001 # Learning rate for CNN components during fine-tuning stage
 
