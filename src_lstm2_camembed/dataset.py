@@ -33,23 +33,27 @@ import os
 from pathlib import Path
 import json
 
+
 def create_camera_mapping(df_data, output_path):
     """
     Create camera ID mapping from all samples and save it
     """
-    # Extract camera IDs from all filenames
-    IPython.embed()
+    # Extract camera IDs and years from filenames
     camera_ids = df_data["filename"].str.split("_").str[0]
-    camera_year = df_data["year"]
-    camera_ids = sorted(camera_ids)  # Sort for consistency
+    camera_years = df_data["year"]
     
-    # Create mapping: camera_name -> numeric_id
+    # Create camera+year combinations
+    camera_year_combinations = camera_ids + "_" + camera_years.astype(str)
+    unique_combinations = camera_year_combinations.unique()
+    unique_combinations = sorted(unique_combinations)  # Sort for consistency
+    
+    # Create mapping: camera_year -> numeric_id
     ## assigns numbers starting at 0
-    camera_mapping = {camera: idx for idx, camera in enumerate(camera_ids)}
+    camera_mapping = {combo: idx for idx, combo in enumerate(unique_combinations)}
     
-    print(f"Found {len(camera_mapping)} unique cameras:")
-    for camera, idx in camera_mapping.items():
-        print(f"  {camera}: {idx}")
+    print(f"Found {len(camera_mapping)} unique camera+year combinations:")
+    for combo, idx in camera_mapping.items():
+        print(f"  {combo}: {idx}")
     
     # Save mapping to file for later use (prediction, evaluation)
     os.makedirs(output_path, exist_ok=True)
@@ -94,8 +98,14 @@ class snowPoleDataset(Dataset):
         sequence_data = self.sequences[index]
         keypoint_data = self.keypoints[index]
 
-        camera_id_str =sequence_data['filename'].str.split('_').str[0].iloc[0]
-        camera_id_numeric = self.camera_mapping[camera_id_str]
+        # camera_id_str =sequence_data['filename'].str.split('_').str[0].iloc[0]
+        # camera_id_numeric = self.camera_mapping[camera_id_str]
+        first_row = sequence_data.iloc[0]
+        camera_id_str = first_row["filename"].split("_")[0]
+        camera_year = str(first_row["year"])  # Make sure it's a string
+        camera_year_combo = f"{camera_id_str}_{camera_year}"
+        
+        camera_id_numeric = self.camera_mapping[camera_year_combo]
 
         filenames = []
         images = []
