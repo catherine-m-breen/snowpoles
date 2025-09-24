@@ -82,7 +82,7 @@ def load_model(args):
     import torch
 
     camera_mapping = load_camera_mapping(args.model)
-    num_cameras = len(camera_mapping)
+    num_cameras = 34 #34 ##len(camera_mapping)
     model = snowPoleResNet50(
         pretrained=False, 
         requires_grad=False, 
@@ -91,7 +91,7 @@ def load_model(args):
     ).to(args.device)
     # load the model checkpoint
     #torch.serialization.add_safe_globals([torch.nn.modules.loss.SmoothL1Loss])
-    model_path = f"{args.model}/model.pth"
+    model_path = f"{args.model}/model.pth" # _epoch50.pth"
     checkpoint = torch.load(model_path, map_location=torch.device(args.device))
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
@@ -119,6 +119,11 @@ def predict(model, args, device, camera_mapping = None):
     snowpolefiles = list(Path(args.path).rglob("*.JPG"))
     snowpolefiles = [f for f in snowpolefiles if not f.name.startswith('.')] ## the weird dot in the front
 
+    # Filter for only cameras in your mapping
+    valid_cameras = set(camera_mapping.keys())
+    snowpolefiles = [f for f in snowpolefiles if f.stem.split('_WSC')[0] in valid_cameras]
+    print(f"Found {len(snowpolefiles)} images from valid cameras: {valid_cameras}")
+    
     metadata = pd.read_csv(f"{args.path}/pole_metadata.csv")
 
     with torch.no_grad():
@@ -137,10 +142,10 @@ def predict(model, args, device, camera_mapping = None):
             # again reshape to add grayscale channel format
             file_path = Path(file)
             filename = file_path.name
-            Camera = file_path.stem.split('_')[0]
+            Camera = file_path.stem.split('_WSC')[0]
             #filename = file.split('/')[-1]
             #Camera = filename.split('/')[-1] ## assumes in a folder with camera name ('cam1', 'cam2', etc)
-            
+
             ## add an empty dimension for sample size
             image = np.transpose(image, (2, 0, 1)) ## 
             image = torch.tensor(image, dtype=torch.float)
@@ -148,7 +153,10 @@ def predict(model, args, device, camera_mapping = None):
             image = image.to(device)
 
             ## camera mapping
-            camera_id = camera_mapping[Camera]
+            try: 
+                camera_id = camera_mapping[Camera]
+            except Exception as e:
+                IPython.embed()
             camera_ids = torch.tensor([camera_id], dtype=torch.long, device=device)
 
 

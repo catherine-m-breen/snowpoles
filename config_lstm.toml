@@ -3,10 +3,15 @@
 
 
 [paths]
-input_images = "/Users/cmbreen/Documents/snow/alaska_dataset/all_images"
+#input_images = "/Volumes/My Book/alaska/native_res"
+input_images = '/Users/cmbreen/Documents/native_res_snex17'
+
 trainee_model = "/Users/cmbreen/Documents/FDLTCC/models/CO_and_WA_model.pth"
-models_output = "models/trained_cam_alaska_lr001_pat5_weighted_seq3_warmup_nativeRes" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
-labels = '/Users/cmbreen/Documents/snow/alaska_dataset/submission/v1/labels.csv'
+models_output = "models/trained_cam_snex17_lr001_pat5_weighted_seq3_warmup" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
+#labels = '/Users/cmbreen/Documents/snow/alaska_dataset/submission/v1/labels.csv'
+#labels = '/Users/cmbreen/Documents/snow/alaska_dataset/submission/v1/labels_updated.csv'
+labels = '/Users/cmbreen/Documents/native_res_snex17/labels.csv'
+pole_metadata = '/Users/cmbreen/Documents/native_res_snex17/pole_metadata.csv'
 
 [labeling]
 subset_to_label = 10 # Label every N images

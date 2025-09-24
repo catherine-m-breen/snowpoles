@@ -25,6 +25,8 @@ python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP_
 python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP_final/CPMB14" --subset_to_label "10"
 
 python processing/labeling.py --datapath "/Volumes/My Book/alaska/native_res/CP 23-24" --subset_to_label "10"
+python processing/labeling.py --datapath "/Volumes/My Book/snex17" --subset_to_label "10"
+python processing/labeling.py --datapath "/Volumes/My Book/snex17" --subset_to_label "20"
 
 
 """
@@ -113,6 +115,13 @@ def main():
     dir = [f for f in dir if not f.name.startswith('._')]
     dir = sorted(dir)
 
+        # Add folders to skip here
+    folders_to_skip =['CG-01E','CG-02N', 'CG-03E','GMSP-CAM','LSOS-CAM','LSOS-GARAGE','LSOS-GARAGE2','LSOS2','ME-CAM',
+    'MM-CAM','MW-CAM','SASP-1','TLS-A3E','TLS-J2N','TLS-J3S','TLS-K6E','TLS-L1W']
+
+    # Filter out files from folders you want to skip
+    dir = [f for f in dir if not any(skip_folder in str(f) for skip_folder in folders_to_skip)]
+    #IPython.embed()
     ## labeling data
     cameraids = []
     filename = []
@@ -128,6 +137,7 @@ def main():
     ## load labels.csv
     write_headers_line = False
     try:
+        #IPython.embed()
         with open(f"{args.path}/labels.csv", "r") as labels2_csv:
             lines = labels2_csv.readlines()
             with open(f"{args.path}/labels.csv", "w") as labels2_csv_write:
@@ -245,7 +255,8 @@ def main():
             top, bottom = plt.ginput(2)
             topX.append(top[0]), topY.append(top[1])
             bottomX.append(bottom[0]), bottomY.append(bottom[1])
-            plt.close()
+            del img
+            plt.close('all')
 
             PixelLength = math.dist(top, bottom)
             PixelLengths.append(PixelLength)

@@ -77,7 +77,7 @@ def create_camera_mapping(training_samples, valid_samples, output_path):
     """
     # Extract camera IDs from all filenames
     all_samples = pd.concat([training_samples, valid_samples], ignore_index=True)
-    camera_ids = all_samples["filename"].str.split("_").str[0].unique()
+    camera_ids = all_samples["filename"].str.split("_WSC").str[0].unique()
     camera_ids = sorted(camera_ids)  # Sort for consistency
     
     # Create mapping: camera_name -> numeric_id
@@ -93,6 +93,7 @@ def create_camera_mapping(training_samples, valid_samples, output_path):
     with open(mapping_file, 'w') as f:
         json.dump(camera_mapping, f, indent=2) 
 
+    #IPython.embed()
     print(f"Camera mapping saved to: {mapping_file}")
     return camera_mapping
 
@@ -163,7 +164,7 @@ class snowPoleDataset(Dataset):
     
     def __getitem__(self, index):
         #IPython.embed()
-        cameraID = self.data.iloc[index]["filename"].split("_")[0]  
+        cameraID = self.data.iloc[index]["filename"].split("_WSC")[0]  
         filename = self.data.iloc[index]["filename"]
 
         camera_id_numeric = self.camera_mapping[cameraID]

@@ -164,7 +164,7 @@ checkpoint = torch.load(args.model, map_location=torch.device(args.device))
 
 #############
 # Create new model with camera embeddings
-num_cameras = 15 ## update with wherever the mapping is ... 
+num_cameras = 18 #34 ## update with wherever the mapping is ... 
 model = snowPoleResNet50(
     pretrained=False,  # Don't load ImageNet weights since we're loading our own
     requires_grad=True,
@@ -287,7 +287,7 @@ for epoch in range(args.epochs):
     print(f"Train Loss: {train_epoch_loss:.4f}")
     print(f'Val Loss: {val_epoch_loss:.4f}')
     ####### saving model every 50 epochs
-    if (epoch % 50) == 0:
+    if (epoch % 10) == 0:
         torch.save(
             {
                 "epoch": args.epochs,

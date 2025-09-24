@@ -13,6 +13,8 @@ python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/BC
 python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP 23-24"
 python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP_final/CPEB13"
 python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP_final/CPMB14"
+python processing/rename_photos.py --path "/Volumes/My Book/alaska/native_res/CP_final/CPMB14"
+python processing/rename_photos.py --path "/Volumes/My Book/snex17"
 """
 
 import glob

@@ -125,7 +125,8 @@ def load_model():
 
       # Load camera mapping first
     camera_mapping = load_camera_mapping(args.model)
-    num_cameras = len(camera_mapping)
+    #IPython.embed()
+    num_cameras = 34 #len(camera_mapping)
 
     model = snowPoleResNet50(
         pretrained=False, 
@@ -134,7 +135,7 @@ def load_model():
         embedding_dim=64  # Should match training
     ).to(args.device)
     # load the model checkpoint
-    model_path = f"{args.model}/model.pth"
+    model_path = f"{args.model}/model_epoch50.pth"
     checkpoint = torch.load(model_path, map_location=torch.device(args.device))
     print(f"loading model from the following path: {args.model}")
     # load model weights state_dict
@@ -157,7 +158,7 @@ def get_camera_id(filename, camera_mapping):
     """
     Extract camera ID from filename and convert to numeric
     """
-    camera_name = filename.split('_')[0]
+    camera_name = filename.split('_WSC')[0]
     
     if camera_name in camera_mapping:
         return camera_mapping[camera_name]
@@ -184,14 +185,16 @@ def predict(model, data, camera_mapping, eval='eval'):
     automated_sds, manual_sds, diff_sds = [], [], []
 
     metadata =  pd.read_csv(f"{config.metadata}")
-    labels =  pd.read_csv('/Users/cmbreen/code/snowpoles/models/trained_alaska_cnn_allpoles_camembed_lr1e4/valid_samples.csv')
+    #labels =  pd.read_csv('/Users/cmbreen/code/snowpoles/models/trained_alaska_cnn_allpoles_camembed_lr1e4_22-24/valid_samples.csv')
+    #labels = pd.read_csv('/Users/cmbreen/code/snowpoles/models/trained_alaska_cnn_camembed_lr1e4_22-24_extraCP/valid_samples.csv')
+    labels = pd.read_csv('/Users/cmbreen/code/snowpoles/models/trained_snex17_cnn_camembed_lr1e4_22-24/valid_samples.csv')
     #pd.read_csv(f"{config.labels}")
 
     with torch.no_grad():
         for i, data in tqdm(enumerate(data)): 
             image, keypoints = data['image'].to(args.device), data['keypoints'].to(config.DEVICE)
             filename = data['filename']
-            Camera = filename.split('_W')[0]
+            Camera = filename.split('_WSC')[0]
             #Camera = "_".join(filename.split("_")[:2])
             
             # get camera embedding 
@@ -218,7 +221,8 @@ def predict(model, data, camera_mapping, eval='eval'):
             ## outputs proj and in cm
             total_length_pixel = distance.euclidean([x1_pred,y1_pred],[x2_pred,y2_pred])
             try: 
-                full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['pole_length_cm'].values[0]
+                #IPython.embed()
+                full_length_pole_cm = metadata[metadata['camera_id'] == Camera]['first_pole_length_px'].values[0]
                 pixel_cm_conversion = metadata[metadata['camera_id'] == Camera]['pixel_cm_conversion'].values[0] 
                 automated_sd = full_length_pole_cm - (pixel_cm_conversion * total_length_pixel)
             
@@ -228,6 +232,7 @@ def predict(model, data, camera_mapping, eval='eval'):
             automated_sds.append(automated_sd)
 
             # ## difference between automated and manual
+            #IPython.embed()
             #IPython.embed()
             manual_pixel_length = labels[labels['filename'] == filename]['PixelLengths'].values[0]
             manual_snowdepth = full_length_pole_cm - (pixel_cm_conversion * manual_pixel_length)

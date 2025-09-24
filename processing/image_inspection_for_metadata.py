@@ -141,7 +141,7 @@ class ImageLineDrawer:
 if __name__ == "__main__":
     try:
         # Replace 'your_image.jpg' with your image path
-        drawer = ImageLineDrawer('/Volumes/My Book/alaska/native_res/BC_final/BC11TLSB/BC11TLSB_WSCT2729.JPG')
+        drawer = ImageLineDrawer('/Volumes/My Book/snex17_snowfree/TLS-N4W/WSCT1835.JPG')
         lines = drawer.run()
         
         # Print final summary

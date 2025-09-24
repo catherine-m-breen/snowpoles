@@ -19,7 +19,7 @@ import IPython
 import numpy as np
 from pathlib import Path
 from model_download import download_models
-from dataset import train_data, train_loader, valid_data, valid_loader
+from dataset import train_data, train_loader, valid_data, valid_loader, num_cameras
 import torch.optim.lr_scheduler as lr_scheduler
 
 # training viz 
@@ -106,6 +106,7 @@ def fit(model, dataloader, data, config):
     
     for i, data in tqdm(enumerate(dataloader), total=num_batches):
         counter += 1
+        IPython.embed()
         image, keypoints, camera_ids = data["image"].to(config['training']['device']), data["keypoints"].to(config['training']['device']),
         data["camera_id"].to(config['training']['device'])
 
@@ -137,6 +138,7 @@ def validate(model, dataloader, data, epoch, config):
     with torch.no_grad():
         for i, data in tqdm(enumerate(dataloader), total=num_batches):
             counter += 1
+            IPython.embed()
             image, keypoints, camera_ids = data["image"].to(config['training']['device']), data["keypoints"].to(config['training']['device']),
             data["camera_id"].to(config['training']['device'])
 
@@ -202,7 +204,7 @@ model = snowPoleResNet50WithCamera(
     hidden_size=256,  
     num_layers=2,     
    num_classes=4,   ## could adjust and predict more poles in the image i guess? 
-   num_cameras = config['model']['num_cameras'],
+   num_cameras = num_cameras,
    camera_embedding_dim =64
 ).to(config['training']['device'])
 
@@ -266,6 +268,7 @@ training_keypoints = np.vstack(training_keypoints)
 sample_weights = calculate_density_weights(training_keypoints)
 
 
+print("Starting Training")
 train_loss = []
 val_loss = []
 ## early stopping ##

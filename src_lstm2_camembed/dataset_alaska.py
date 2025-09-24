@@ -39,8 +39,35 @@ def create_camera_mapping(df_data, output_path):
     Create camera ID mapping from all samples and save it
     """
     # Extract camera IDs and years from filenames
-    camera_ids = df_data["cameraID"].unique()
-    unique_combinations = sorted(camera_ids)  # Sort for consistency
+    camera_ids = df_data["filename"].str.split("_WS").str[0]
+    IPython.embed()
+    camera_years = df_data["year"]
+    
+    # Analyze camera duplicates across years
+    unique_cameras = camera_ids.unique()
+    cameras_with_duplicates = []
+    cameras_without_duplicates = []
+    
+    for camera in unique_cameras:
+        years_for_camera = camera_years[camera_ids == camera].unique()
+        if len(years_for_camera) > 1:
+            cameras_with_duplicates.append((camera, sorted(years_for_camera)))
+        else:
+            cameras_without_duplicates.append((camera, years_for_camera[0]))
+    
+    print(f"\n=== CAMERA ANALYSIS ===")
+    print(f"Cameras with data across multiple years ({len(cameras_with_duplicates)}):")
+    for camera, years in cameras_with_duplicates:
+        print(f"  {camera}: {years}")
+    
+    print(f"\nCameras with data from single year ({len(cameras_without_duplicates)}):")
+    for camera, year in cameras_without_duplicates:
+        print(f"  {camera}: {year}")
+    
+    # Create camera+year combinations
+    camera_year_combinations = camera_ids + "_" + camera_years.astype(str)
+    unique_combinations = camera_year_combinations.unique()
+    unique_combinations = sorted(unique_combinations)  # Sort for consistency
     
     # Create mapping: camera_year -> numeric_id
     ## assigns numbers starting at 0
@@ -96,12 +123,12 @@ class snowPoleDataset(Dataset):
         # camera_id_str =sequence_data['filename'].str.split('_').str[0].iloc[0]
         # camera_id_numeric = self.camera_mapping[camera_id_str]
         first_row = sequence_data.iloc[0]
-        #IPython.embed()
-        camera_id_str = first_row["cameraID"]
-        # camera_year = str(first_row["year"])  # Make sure it's a string
-        # camera_year_combo = f"{camera_id_str}_{camera_year}"
+        IPython.embed()
+        camera_id_str = first_row["filename"].split("_WS")[0]
+        camera_year = str(first_row["year"])  # Make sure it's a string
+        camera_year_combo = f"{camera_id_str}_{camera_year}"
         
-        camera_id_numeric = self.camera_mapping[camera_id_str]
+        camera_id_numeric = self.camera_mapping[camera_year_combo]
 
         filenames = []
         images = []
@@ -185,7 +212,6 @@ num_cameras = len(camera_mapping)
 
 ## create sequences ## 
 sequence_length = 4
-IPython.embed()
 grouped = df_data.groupby(df_data['filename'].str.split('_').str[0])
 X_sequences, keypoints = [], [] ## sequences (as filenames) and predictions (last filename's keypoint)
     
@@ -194,7 +220,7 @@ for camera_id, group in grouped:
     group_sorted = group.sort_values('filename')
 
     # Create overlapping sequences
-    for i in range(len(group_sorted) - sequence_length + 1): ## this is currently overlapping 
+    for i in range(len(group_sorted) - sequence_length + 1):
        # IPython.embed()
         seq_data = group_sorted.iloc[i:i + sequence_length]
         keypoint_prediction = group_sorted[['x1','y1','x2','y2']].iloc[i + sequence_length - 1] 

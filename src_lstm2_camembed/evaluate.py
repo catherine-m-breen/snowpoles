@@ -21,7 +21,7 @@ from model import snowPoleResNet50
 import IPython
 import utils
 import pandas as pd
-from dataset import train_data, valid_data
+from snowpoles.src_lstm2_camembed.dataset_alaska import train_data, valid_data
 from tqdm import tqdm
 from scipy.spatial import distance
 import os
