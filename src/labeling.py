@@ -37,16 +37,14 @@ from pathlib import Path
 import tomli as tomllib
 import IPython
 
-def enable_scroll_zoom(ax, base_scale=1.2):
-    """Enables mouse-wheel zooming for a matplotlib axis"""
+def enable_scroll_zoom_and_pan(ax, base_scale=1.2):
+    """Enables mouse-wheel zooming and right-click panning for a matplotlib axis"""
+    pan_state = {'is_panning': False, 'start_x': None, 'start_y': None, 'start_xlim': None, 'start_ylim': None}
+
     def zoom(event):
         if event.inaxes != ax: return
-        
-        # Get current limits
         cur_xlim = ax.get_xlim()
         cur_ylim = ax.get_ylim()
-        
-        # Get event location
         xdata = event.xdata 
         ydata = event.ydata 
         
@@ -57,19 +55,44 @@ def enable_scroll_zoom(ax, base_scale=1.2):
         else:
             return
 
-        # Calculate new limits
         new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
         new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
         relx = (cur_xlim[1] - xdata)/(cur_xlim[1] - cur_xlim[0])
         rely = (cur_ylim[1] - ydata)/(cur_ylim[1] - cur_ylim[0])
 
-        # Set new limits
         ax.set_xlim([xdata - new_width * (1-relx), xdata + new_width * (relx)])
         ax.set_ylim([ydata - new_height * (1-rely), ydata + new_height * (rely)])
-        ax.figure.canvas.draw()
+        ax.figure.canvas.draw_idle()
 
-    # Attach the event
+    def press(event):
+        # Button 3 is the RIGHT mouse button
+        if event.button == 3 and event.inaxes == ax:
+            pan_state['is_panning'] = True
+            pan_state['start_x'] = event.x
+            pan_state['start_y'] = event.y
+            pan_state['start_xlim'] = ax.get_xlim()
+            pan_state['start_ylim'] = ax.get_ylim()
+
+    def release(event):
+        if event.button == 3:
+            pan_state['is_panning'] = False
+
+    def motion(event):
+        if pan_state['is_panning'] and pan_state['start_x'] is not None:
+            dx_pixels = event.x - pan_state['start_x']
+            dy_pixels = event.y - pan_state['start_y']
+            bbox = ax.get_window_extent()
+            dx_data = dx_pixels * (pan_state['start_xlim'][1] - pan_state['start_xlim'][0]) / bbox.width
+            dy_data = dy_pixels * (pan_state['start_ylim'][1] - pan_state['start_ylim'][0]) / bbox.height
+            
+            ax.set_xlim(pan_state['start_xlim'][0] - dx_data, pan_state['start_xlim'][1] - dx_data)
+            ax.set_ylim(pan_state['start_ylim'][0] - dy_data, pan_state['start_ylim'][1] - dy_data)
+            ax.figure.canvas.draw_idle()
+
     ax.figure.canvas.mpl_connect('scroll_event', zoom)
+    ax.figure.canvas.mpl_connect('button_press_event', press)
+    ax.figure.canvas.mpl_connect('button_release_event', release)
+    ax.figure.canvas.mpl_connect('motion_notify_event', motion)
 
 def main():
 
@@ -208,10 +231,10 @@ def main():
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
         ax = plt.gca()
-        enable_scroll_zoom(ax)
+        enable_scroll_zoom_and_pan(ax)
 
-        plt.title("label top and then bottom of 10cm section \n Click ANYWHERE to confirm. RIGHT-CLICK to undo.", fontweight="bold")
-        points = plt.ginput(3, timeout= 0)
+        plt.title("label top and then bottom of 10cm section \n Click ANYWHERE to confirm | BACKSPACE to undo | RIGHT-CLICK drag | SCROLL zoom", fontweight="bold")
+        points = plt.ginput(3, timeout=0, mouse_pop=2)
         top_10, bottom_10 = points[0], points[1]
         plt.close()
 
@@ -219,10 +242,10 @@ def main():
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
         ax = plt.gca()
-        enable_scroll_zoom(ax)
+        enable_scroll_zoom_and_pan(ax)
 
-        plt.title("label top and then bottom of full pole \n Click ANYWHERE to confirm. RIGHT-CLICK to undo.", fontweight="bold")
-        points = plt.ginput(3, timeout= 0)
+        plt.title("label top and then bottom of full pole \n Click ANYWHERE to confirm | BACKSPACE to undo | RIGHT-CLICK drag | SCROLL zoom.", fontweight="bold")
+        points = plt.ginput(3, timeout=0, mouse_pop=2)
         top, bottom = points[0], points[1]
         plt.close()
         full_pole_length_px = math.dist((top), (bottom))
