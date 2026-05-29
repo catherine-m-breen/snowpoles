@@ -190,15 +190,15 @@ def main():
             else:
                 for line in labels2_csv:
                     splitline = line.split(",")
-                    cameraids.append(splitline[0])
-                    filename.append(splitline[1])
-                    creationTimes.append(splitline[2])
-                    topX.append(splitline[3])
-                    topY.append(splitline[4])
-                    bottomX.append(splitline[5])
-                    bottomY.append(splitline[6])
-                    PixelLengths.append(splitline[7].strip("\n"))
-                    snowdepths.append(splitline[8].strip("\n"))
+                    #cameraids.append(splitline[0])
+                    filename.append(splitline[0])
+                    creationTimes.append(splitline[1])
+                    topX.append(splitline[2])
+                    topY.append(splitline[3])
+                    bottomX.append(splitline[4])
+                    bottomY.append(splitline[5])
+                    PixelLengths.append(splitline[6].strip("\n"))
+                    #snowdepths.append(splitline[7].strip("\n"))
 
     except FileNotFoundError:
         write_headers_line = True
@@ -295,8 +295,13 @@ def main():
             ## assumes the cameras are stored in folder with their camera name
             figure = plt.figure(figsize=(20, 10), num=Path(file).name)
             plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            plt.title("label top and then bottom", fontweight="bold")
-            top, bottom = plt.ginput(2)
+
+            ax = plt.gca()
+            enable_scroll_zoom_and_pan(ax)
+
+            plt.title("label top and then bottom of full pole \n Click ANYWHERE to confirm | BACKSPACE to undo | RIGHT-CLICK drag | SCROLL zoom.", fontweight="bold")
+            points = plt.ginput(3, timeout=0, mouse_pop=2)
+            top, bottom = points[0], points[1]
             topX.append(top[0]), topY.append(top[1])
             bottomX.append(bottom[0]), bottomY.append(bottom[1])
             plt.close()
