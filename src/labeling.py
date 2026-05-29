@@ -17,6 +17,9 @@ example run
 python src/labeling.py --datapath "/path/to/nontrained/data" --pole_length "304.8" --subset_to_label "2"
 python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/FF_2024" --subset_to_label "10"
 
+python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/summer_2025/FF_2024" --subset_to_label "10"
+
+
 
 """
 
@@ -33,6 +36,40 @@ import numpy as np
 from pathlib import Path
 import tomli as tomllib
 import IPython
+
+def enable_scroll_zoom(ax, base_scale=1.2):
+    """Enables mouse-wheel zooming for a matplotlib axis"""
+    def zoom(event):
+        if event.inaxes != ax: return
+        
+        # Get current limits
+        cur_xlim = ax.get_xlim()
+        cur_ylim = ax.get_ylim()
+        
+        # Get event location
+        xdata = event.xdata 
+        ydata = event.ydata 
+        
+        if event.button == 'up':
+            scale_factor = 1 / base_scale # zoom in
+        elif event.button == 'down':
+            scale_factor = base_scale     # zoom out
+        else:
+            return
+
+        # Calculate new limits
+        new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
+        new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
+        relx = (cur_xlim[1] - xdata)/(cur_xlim[1] - cur_xlim[0])
+        rely = (cur_ylim[1] - ydata)/(cur_ylim[1] - cur_ylim[0])
+
+        # Set new limits
+        ax.set_xlim([xdata - new_width * (1-relx), xdata + new_width * (relx)])
+        ax.set_ylim([ydata - new_height * (1-rely), ydata + new_height * (rely)])
+        ax.figure.canvas.draw()
+
+    # Attach the event
+    ax.figure.canvas.mpl_connect('scroll_event', zoom)
 
 def main():
 
@@ -169,13 +206,24 @@ def main():
             ## assumes the cameras are stored in folder with their camera name
         figure = plt.figure(figsize=(20, 10), num=Path(file).name)
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        plt.title("label top and then bottom of 10cm section", fontweight="bold")
-        top_10, bottom_10 = plt.ginput(2)
+
+        ax = plt.gca()
+        enable_scroll_zoom(ax)
+
+        plt.title("label top and then bottom of 10cm section \n Click ANYWHERE to confirm. RIGHT-CLICK to undo.", fontweight="bold")
+        points = plt.ginput(3, timeout= 0)
+        top_10, bottom_10 = points[0], points[1]
         plt.close()
+
         figure = plt.figure(figsize=(20, 10), num=Path(file).name)
         plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        plt.title("label top and then bottom of full pole", fontweight="bold")
-        top, bottom = plt.ginput(2)
+
+        ax = plt.gca()
+        enable_scroll_zoom(ax)
+
+        plt.title("label top and then bottom of full pole \n Click ANYWHERE to confirm. RIGHT-CLICK to undo.", fontweight="bold")
+        points = plt.ginput(3, timeout= 0)
+        top, bottom = points[0], points[1]
         plt.close()
         full_pole_length_px = math.dist((top), (bottom))
         full_pole_length_cm = (10 / math.dist((top_10), (bottom_10))) *  math.dist((top), (bottom))
