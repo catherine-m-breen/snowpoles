@@ -35,7 +35,9 @@ def download_models():
     url = 'https://zenodo.org/records/12764696/files/CO_and_WA_model.pth'
     
     # download if does not exist  
-    if not os.path.exists(f'{save_path}\CO_and_WA_model.pth'):
+    #if not os.path.exists(f'{save_path}\CO_and_WA_model.pth'):
+    if not (Path(save_path) / 'CO_and_WA_model.pth').exists():
+    
         wget_command = f'wget {url} -P {save_path}'
         output_file = os.path.join(save_path, url.split("/")[-1]).replace("\\","/")
         curl_command = f'curl -L --ssl-no-revoke "{url}" -o "{output_file}"'
@@ -93,7 +95,7 @@ def predict(model, device): ##
     full_path = root.joinpath(base_path)
 
     # Get all files recursively
-    snowpolefiles = list(full_path.rglob("*.jpg"))
+    snowpolefiles = list(full_path.rglob("*.JPG"))
 
     # Read metadata
     metadata = pd.read_csv(full_path / "pole_metadata.csv")
@@ -101,7 +103,7 @@ def predict(model, device): ##
     with torch.no_grad():
         for i, file in tqdm(enumerate(snowpolefiles)): 
     
-            image = cv2.imread(file)
+            image = cv2.imread(str(file))
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             h, w, *_ = image.shape
             image = cv2.resize(image, (224,224))
