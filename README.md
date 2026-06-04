@@ -44,7 +44,7 @@ Note: our script "rename_photos.py" checks that the image filenames are in the r
 
 GENERIC:
 ```
-python preprocess/rename_photos.py 
+python src/rename_photos.py 
 python src/labeling.py --datapath [IMAGE_DIRECTORY] --pole_length [POLE LENGTH IN CM] --subset_to_label [# BETWEEN LABELED IMAGES]
 ```
 EXAMPLE:
