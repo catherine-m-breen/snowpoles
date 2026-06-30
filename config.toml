@@ -3,24 +3,10 @@
 
 
 [paths]
-#input_images = "/Users/cmbreen/Documents/snow/alaska_dataset/all_images"
-##input_images = "/Users/cmbreen/Documents/snow/alaska_dataset/all_images/BC_final_448/BC1TLDA" 
-#input_images = '/Volumes/My Book/alaska/native_res'
-#input_images = '/Volumes/My Book/alaska/native_res_448'
-#input_images = '/Users/cmbreen/Documents/native_res_448'
-
 input_images = '/Users/cmbreen/Documents/native_res_snex17'
 
 trainee_model = "/Users/cmbreen/Documents/FDLTCC/models/CO_and_WA_model.pth"
-models_output = "models/trained_snex17_cnn_camembed_lr1e4_18" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
-#labels = "/Users/cmbreen/Documents/snow/alaska_dataset/all_images/labels_onepole.csv"
-##labels = "/Volumes/My Book/alaska/native_res/labels_nativeres.csv"
-##labels = '/Users/cmbreen/Documents/snow/alaska_dataset/all_images/labels_original.csv'
-#pole_metadata = '/Users/cmbreen/Documents/snow/alaska_dataset/submission/v1/pole_metadata.csv'
-#labels = '/Users/cmbreen/Documents/snow/alaska_dataset/submission/v1/labels_updated copy2.csv'
-
-#labels = '/Users/cmbreen/Documents/native_res_448/labels_allcams_cleaned.csv'
-#pole_metadata = '/Users/cmbreen/Documents/native_res_448/pole_metadata.csv'
+models_output = "models/model_every10" # Directory where trained models should be stored. "model.pth" will be the filename of the trained model.
 
 labels = '/Users/cmbreen/Documents/native_res_snex17/labels.csv'
 pole_metadata = '/Users/cmbreen/Documents/native_res_snex17/pole_metadata.csv'

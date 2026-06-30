@@ -14,9 +14,6 @@ The labels.csv file can then be directly pointed at train.py for fine-tuning. Th
 
 example run 
 
-python src/labeling.py --datapath "/path/to/nontrained/data" --pole_length "304.8" --subset_to_label "2"
-python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/FF_2024" --subset_to_label "10"
-
 python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/summer_2025/FF_2024" --subset_to_label "10"
 
 
@@ -121,8 +118,8 @@ def main():
         args.path = config["paths"]["input_images"]
     # if not args.pole_length:
     #     args.pole_length = config["labeling"]["pole_length"]
-    if not args.subset_to_label:
-        args.subset_to_label = config["labeling"]["subset_to_label"]
+    # if not args.subset_to_label:
+    #     args.subset_to_label = config["labeling"]["subset_to_label"]
 
     # Confirmation
     if not args.no_confirm:
@@ -299,14 +296,23 @@ def main():
             ax = plt.gca()
             enable_scroll_zoom_and_pan(ax)
 
-            plt.title("label top and then bottom of full pole \n Click ANYWHERE to confirm | BACKSPACE to undo | RIGHT-CLICK drag | SCROLL zoom.", fontweight="bold")
+            plt.title("label top and then bottom of full pole \n Click ANYWHERE to confirm | BACKSPACE to undo | RIGHT-CLICK drag | SCROLL zoom | Press ENTER for BAD image.", fontweight="bold")
             points = plt.ginput(3, timeout=0, mouse_pop=2)
-            top, bottom = points[0], points[1]
-            topX.append(top[0]), topY.append(top[1])
-            bottomX.append(bottom[0]), bottomY.append(bottom[1])
             plt.close()
 
-            PixelLength = math.dist(top, bottom)
+            # Check if the user pressed ENTER (returning fewer than 2 points)
+            if len(points) < 2:
+                print("  -> Marked as BAD image (-9999)")
+                top, bottom = (-9999, -9999), (-9999, -9999)
+                PixelLength = -9999
+                snowdepth = -9999
+            else:
+                top, bottom = points[0], points[1]
+                PixelLength = math.dist(top, bottom)
+                snowdepth = pole_length_cm_lookup[cameraID] - (PixelLength * conversion_lookup[cameraID])
+
+            topX.append(top[0]), topY.append(top[1])
+            bottomX.append(bottom[0]), bottomY.append(bottom[1])
             PixelLengths.append(PixelLength)
 
             ## save data to labels.csv
@@ -321,7 +327,6 @@ def main():
             creationTimes.append(formatted_datetime)
 
             ## snowdepth ##
-            snowdepth = pole_length_cm_lookup[cameraID] - (PixelLength * conversion_lookup[cameraID])
             snowdepths.append(snowdepth)
 
         i += 1

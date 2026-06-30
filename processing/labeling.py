@@ -14,7 +14,7 @@ The labels.csv file can then be directly pointed at train.py for fine-tuning. Th
 
 example run 
 
-python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/FF_2024" --subset_to_label "10"
+python src/labeling.py --datapath "/Users/cmbreen/Documents/FDLTCC/summer_2025/FF_2024" --subset_to_label "10"
 
 python src/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/BC1TLDA" --subset_to_label "10"
 python src_lstm2/labeling.py --datapath "/Users/cmbreen/Documents/snow/alaska_dataset/BC_final_448" --subset_to_label "10"
